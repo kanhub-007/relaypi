@@ -79,10 +79,12 @@ async def test_failure_releases_lock_so_next_message_works():
     pi = RaiseOnceThenOk()
     sender = FakeMessageSender()
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event("123", "koena", "first"),
-            msg_event("123", "koena", "second"),
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event("123", "koena", "first"),
+                msg_event("123", "koena", "second"),
+            ]
+        ),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=AllowAllList(),

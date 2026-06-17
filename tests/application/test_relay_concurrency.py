@@ -34,10 +34,12 @@ async def _wait_until(predicate, timeout: float = 1.0) -> None:
 async def test_same_chat_messages_are_serialized_in_order():
     pi = BlockingAgentClient()
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event("123", "koena", "first"),
-            msg_event("123", "koena", "second"),
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event("123", "koena", "first"),
+                msg_event("123", "koena", "second"),
+            ]
+        ),
         router=_single_client_router(pi),
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
@@ -82,10 +84,12 @@ async def test_different_chats_run_concurrently():
             pass
 
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event("123", "koena", "hello"),
-            msg_event("456", "alice", "hi"),
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event("123", "koena", "hello"),
+                msg_event("456", "alice", "hi"),
+            ]
+        ),
         router=PerChatRouter(),  # type: ignore[arg-type]
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
@@ -95,8 +99,7 @@ async def test_different_chats_run_concurrently():
 
     # Both chats should be in flight simultaneously (read loop not blocked).
     await _wait_until(
-        lambda: len(clients) == 2
-        and all(len(c.pending) >= 1 for c in clients.values())
+        lambda: len(clients) == 2 and all(len(c.pending) >= 1 for c in clients.values())
     )
 
     # Release both and let the turns finish.

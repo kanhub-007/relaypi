@@ -9,8 +9,6 @@ Covers the protocol traps from docs/development.md:
   * ``extension_ui_request`` is always answered (no deadlock)
 """
 
-import asyncio
-
 import pytest
 
 from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
@@ -32,15 +30,26 @@ def _resp(cmd_id: int, success: bool, **data) -> dict:
 async def test_prompt_collect_returns_final_assistant_text():
     transport = FakeStreamTransport()
     # Command 1 = prompt: accepted, one text delta, agent_end.
-    transport.script_response(1, [
-        {"type": "response", "id": 1, "command": "prompt", "success": True},
-        {"type": "agent_end", "messages": []},
-    ])
+    transport.script_response(
+        1,
+        [
+            {"type": "response", "id": 1, "command": "prompt", "success": True},
+            {"type": "agent_end", "messages": []},
+        ],
+    )
     # Command 2 = get_last_assistant_text.
-    transport.script_response(2, [
-        {"type": "response", "id": 2, "command": "get_last_assistant_text",
-         "success": True, "data": {"text": "BTC looks bullish"}},
-    ])
+    transport.script_response(
+        2,
+        [
+            {
+                "type": "response",
+                "id": 2,
+                "command": "get_last_assistant_text",
+                "success": True,
+                "data": {"text": "BTC looks bullish"},
+            },
+        ],
+    )
 
     client = await _start(transport)
     try:
@@ -50,15 +59,28 @@ async def test_prompt_collect_returns_final_assistant_text():
 
     assert text == "BTC looks bullish"
     # Both commands were sent, with the expected message and types.
-    assert transport.writes[0] == {"id": 1, "type": "prompt", "message": "[from=koena] analyze BTC"}
+    assert transport.writes[0] == {
+        "id": 1,
+        "type": "prompt",
+        "message": "[from=koena] analyze BTC",
+    }
     assert transport.writes[1]["type"] == "get_last_assistant_text"
 
 
 async def test_rejected_prompt_raises_does_not_hang():
     transport = FakeStreamTransport()
-    transport.script_response(1, [
-        {"type": "response", "id": 1, "command": "prompt", "success": False, "error": "bad input"},
-    ])
+    transport.script_response(
+        1,
+        [
+            {
+                "type": "response",
+                "id": 1,
+                "command": "prompt",
+                "success": False,
+                "error": "bad input",
+            },
+        ],
+    )
 
     client = await _start(transport)
     try:
@@ -72,15 +94,31 @@ async def test_confirm_ui_request_is_auto_responded_and_turn_completes():
     transport = FakeStreamTransport()
     # Mid-turn, PI emits an approval request BEFORE agent_end. In RPC mode this
     # BLOCKS until answered — the client must send extension_ui_response.
-    transport.script_response(1, [
-        {"type": "response", "id": 1, "command": "prompt", "success": True},
-        {"type": "extension_ui_request", "id": "u1", "method": "confirm", "title": "ok?"},
-        {"type": "agent_end", "messages": []},
-    ])
-    transport.script_response(2, [
-        {"type": "response", "id": 2, "command": "get_last_assistant_text",
-         "success": True, "data": {"text": "done"}},
-    ])
+    transport.script_response(
+        1,
+        [
+            {"type": "response", "id": 1, "command": "prompt", "success": True},
+            {
+                "type": "extension_ui_request",
+                "id": "u1",
+                "method": "confirm",
+                "title": "ok?",
+            },
+            {"type": "agent_end", "messages": []},
+        ],
+    )
+    transport.script_response(
+        2,
+        [
+            {
+                "type": "response",
+                "id": 2,
+                "command": "get_last_assistant_text",
+                "success": True,
+                "data": {"text": "done"},
+            },
+        ],
+    )
 
     client = await _start(transport)
     try:
@@ -90,22 +128,37 @@ async def test_confirm_ui_request_is_auto_responded_and_turn_completes():
 
     # The turn completed (no deadlock) and the response was auto-confirmed.
     assert text == "done"
-    ui_responses = [w for w in transport.writes if w.get("type") == "extension_ui_response"]
-    assert ui_responses == [{"type": "extension_ui_response", "id": "u1", "confirmed": True}]
+    ui_responses = [
+        w for w in transport.writes if w.get("type") == "extension_ui_response"
+    ]
+    assert ui_responses == [
+        {"type": "extension_ui_response", "id": "u1", "confirmed": True}
+    ]
 
 
 async def test_select_input_editor_requests_auto_responded_with_empty_value():
     for method in ("select", "input", "editor"):
         transport = FakeStreamTransport()
-        transport.script_response(1, [
-            {"type": "response", "id": 1, "command": "prompt", "success": True},
-            {"type": "extension_ui_request", "id": "u1", "method": method},
-            {"type": "agent_end", "messages": []},
-        ])
-        transport.script_response(2, [
-            {"type": "response", "id": 2, "command": "get_last_assistant_text",
-             "success": True, "data": {"text": "ok"}},
-        ])
+        transport.script_response(
+            1,
+            [
+                {"type": "response", "id": 1, "command": "prompt", "success": True},
+                {"type": "extension_ui_request", "id": "u1", "method": method},
+                {"type": "agent_end", "messages": []},
+            ],
+        )
+        transport.script_response(
+            2,
+            [
+                {
+                    "type": "response",
+                    "id": 2,
+                    "command": "get_last_assistant_text",
+                    "success": True,
+                    "data": {"text": "ok"},
+                },
+            ],
+        )
 
         client = await _start(transport)
         try:
@@ -114,4 +167,6 @@ async def test_select_input_editor_requests_auto_responded_with_empty_value():
             await client.stop()
 
         ui = [w for w in transport.writes if w.get("type") == "extension_ui_response"]
-        assert ui == [{"type": "extension_ui_response", "id": "u1", "value": ""}], method
+        assert ui == [
+            {"type": "extension_ui_response", "id": "u1", "value": ""}
+        ], method

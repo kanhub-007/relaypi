@@ -158,9 +158,13 @@ class PIRpcClient(AgentClient):
         method = req.get("method")
         rid = req.get("id")
         if method in ("select", "input", "editor"):
-            await self._send_raw({"type": "extension_ui_response", "id": rid, "value": ""})
+            await self._send_raw(
+                {"type": "extension_ui_response", "id": rid, "value": ""}
+            )
         elif method == "confirm":
-            await self._send_raw({"type": "extension_ui_response", "id": rid, "confirmed": True})
+            await self._send_raw(
+                {"type": "extension_ui_response", "id": rid, "confirmed": True}
+            )
         # notify / setStatus / setWidget / setTitle / set_editor_text: no response.
 
     async def _send_raw(self, obj: dict) -> None:

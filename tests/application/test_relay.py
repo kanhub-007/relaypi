@@ -4,8 +4,6 @@ Black-box: we wire the Relay with in-memory fakes and assert on observable
 outcomes (what was prompted, what was sent). No interaction assertions.
 """
 
-import asyncio
-
 from hal_relay.core.application.relay import Relay
 from hal_relay.core.domain.entities.group_config import GroupConfig
 from hal_relay.infrastructure.allowlist_config import ConfigAllowlist
@@ -59,10 +57,12 @@ async def test_relay_drops_non_allowlisted_senders_and_keeps_allowlisted():
     sender = FakeMessageSender()
     allowlist = ConfigAllowlist(dm_users={987654321}, groups={})
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event("1", "stranger", "hi", user_id=999),     # not allowlisted
-            msg_event("2", "koena", "hi", user_id=987654321),  # allowlisted
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event("1", "stranger", "hi", user_id=999),  # not allowlisted
+                msg_event("2", "koena", "hi", user_id=987654321),  # allowlisted
+            ]
+        ),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=allowlist,
@@ -87,11 +87,19 @@ async def test_relay_applies_open_and_restricted_group_modes():
         },
     )
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event(-100111000, "anyone", "hi", chat_type="group", user_id=555),       # open
-            msg_event(-100222000, "alice", "hi", chat_type="group", user_id=111222333),  # member
-            msg_event(-100222000, "stranger", "hi", chat_type="group", user_id=999),     # not member
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event(
+                    -100111000, "anyone", "hi", chat_type="group", user_id=555
+                ),  # open
+                msg_event(
+                    -100222000, "alice", "hi", chat_type="group", user_id=111222333
+                ),  # member
+                msg_event(
+                    -100222000, "stranger", "hi", chat_type="group", user_id=999
+                ),  # not member
+            ]
+        ),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=allowlist,
@@ -115,10 +123,12 @@ async def test_relay_routes_distinct_chats_to_distinct_sessions():
             pass
 
     relay = Relay(
-        source=FakeMessageSource([
-            msg_event("123", "koena", "hello"),
-            msg_event("456", "alice", "hi"),
-        ]),
+        source=FakeMessageSource(
+            [
+                msg_event("123", "koena", "hello"),
+                msg_event("456", "alice", "hi"),
+            ]
+        ),
         router=RecordingRouter(),  # type: ignore[arg-type]
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
