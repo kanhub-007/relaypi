@@ -1,0 +1,31 @@
+[project]
+name = "hal-relay"
+version = "0.1.0"
+description = "Binding layer between telegramy (Telegram transport) and PI (HAL agent)."
+requires-python = ">=3.12"
+dependencies = [
+    "websockets>=12",
+    "httpx>=0.27",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "ruff",
+    "black",
+    "mypy",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
