@@ -7,6 +7,8 @@ outcomes (what was prompted, what was sent). No interaction assertions.
 import asyncio
 
 from hal_relay.core.application.relay import Relay
+from hal_relay.core.domain.entities.group_config import GroupConfig
+from hal_relay.infrastructure.allowlist_config import ConfigAllowlist
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_agent_client import FakeAgentClient
@@ -49,3 +51,52 @@ async def test_relay_skips_non_message_events():
     # No prompt sent, no reply sent.
     assert pi.commands == []
     assert sender.sent == []
+
+
+async def test_relay_drops_non_allowlisted_senders_and_keeps_allowlisted():
+    # Scenario 2 (Relay integration): only the allowlisted user is prompted.
+    pi = FakeAgentClient()
+    sender = FakeMessageSender()
+    allowlist = ConfigAllowlist(dm_users={987654321}, groups={})
+    relay = Relay(
+        source=FakeMessageSource([
+            msg_event("1", "stranger", "hi", user_id=999),     # not allowlisted
+            msg_event("2", "koena", "hi", user_id=987654321),  # allowlisted
+        ]),
+        router=FakeRouter(pi),
+        sender=sender,
+        allowlist=allowlist,
+    )
+
+    await relay.drain()
+
+    # Only the allowlisted user's message reached PI.
+    assert len(pi.commands) == 1
+    assert "[from=koena]" in pi.commands[0]["message"]
+    assert sender.sent == [{"chat_id": "2", "text": "[ok]"}]
+
+
+async def test_relay_applies_open_and_restricted_group_modes():
+    pi = FakeAgentClient()
+    sender = FakeMessageSender()
+    allowlist = ConfigAllowlist(
+        dm_users=set(),
+        groups={
+            -100111000: GroupConfig(mode="open"),
+            -100222000: GroupConfig(mode="restricted", members=frozenset({111222333})),
+        },
+    )
+    relay = Relay(
+        source=FakeMessageSource([
+            msg_event(-100111000, "anyone", "hi", chat_type="group", user_id=555),       # open
+            msg_event(-100222000, "alice", "hi", chat_type="group", user_id=111222333),  # member
+            msg_event(-100222000, "stranger", "hi", chat_type="group", user_id=999),     # not member
+        ]),
+        router=FakeRouter(pi),
+        sender=sender,
+        allowlist=allowlist,
+    )
+
+    await relay.drain()
+
+    assert len(pi.commands) == 2
