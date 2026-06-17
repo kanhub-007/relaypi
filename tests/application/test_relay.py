@@ -100,3 +100,30 @@ async def test_relay_applies_open_and_restricted_group_modes():
     await relay.drain()
 
     assert len(pi.commands) == 2
+
+
+async def test_relay_routes_distinct_chats_to_distinct_sessions():
+    # Scenario 3 (Relay integration): two chats -> two router lookups, one each.
+    seen_chats: list[str] = []
+
+    class RecordingRouter:
+        async def get_or_create(self, chat_id: str):
+            seen_chats.append(chat_id)
+            return FakeAgentClient(reply=f"reply-{chat_id}")
+
+        async def stop_all(self) -> None:
+            pass
+
+    relay = Relay(
+        source=FakeMessageSource([
+            msg_event("123", "koena", "hello"),
+            msg_event("456", "alice", "hi"),
+        ]),
+        router=RecordingRouter(),  # type: ignore[arg-type]
+        sender=FakeMessageSender(),
+        allowlist=AllowAllList(),
+    )
+
+    await relay.drain()
+
+    assert set(seen_chats) == {"123", "456"}
