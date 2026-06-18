@@ -32,7 +32,7 @@ from tests.fakes.event_helpers import msg_event
 @pytest.fixture
 def clean_env(monkeypatch):
     for key in list(os.environ):
-        if key.startswith("HAL_"):
+        if key.startswith("RELAYPI_"):
             monkeypatch.delenv(key, raising=False)
     return monkeypatch
 

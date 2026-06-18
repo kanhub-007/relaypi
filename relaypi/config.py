@@ -13,7 +13,7 @@ Environment variables (all optional; listed with defaults):
   RELAYPI_WS_URL    ws://localhost:8765            telegramy WebSocket
   RELAYPI_MCP_URL   http://localhost:8005/mcp      telegramy MCP send endpoint
   RELAYPI_PI_BIN          shutil.which("pi") or "pi"     PI executable (Windows: .cmd shim)
-  RELAYPI_PROJECT_DIR     hal                            HAL project dir (AGENTS.md + .pi/)
+  RELAYPI_PROJECT_DIR     hal                            PI profile directory (AGENTS.md + .pi/)
   RELAYPI_SESSION_DIR     hal/sessions                   per-chat .jsonl root
   RELAYPI_ALLOWLIST       config/allowlist.yaml          allowlist config file path
 """

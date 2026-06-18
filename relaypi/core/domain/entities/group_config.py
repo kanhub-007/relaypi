@@ -8,8 +8,8 @@ class GroupConfig:
     """Configuration for a whitelisted group chat.
 
     Attributes:
-        mode: "open" (any member may use HAL) or "restricted" (only listed
-            ``members`` may use HAL).
+        mode: "open" (any member may use the agent) or "restricted" (only listed
+            ``members`` may use the agent).
         members: User ids allowed when mode is "restricted". Empty for open.
     """
 

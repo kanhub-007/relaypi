@@ -1,7 +1,7 @@
 [project]
 name = "relaypi"
 version = "0.1.0"
-description = "Binding layer between telegramy (Telegram transport) and PI (HAL agent)."
+description = "Binding layer between telegramy (Telegram transport) and PI (your AI agent)."
 requires-python = ">=3.12"
 dependencies = [
     "websockets>=12",

@@ -6,7 +6,7 @@ from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 class Allowlist(ABC):
-    """Decides whether an inbound message is allowed to reach HAL."""
+    """Decides whether an inbound message is allowed to reach the agent."""
 
     @abstractmethod
     def allows(self, msg: InboundMessage) -> bool:

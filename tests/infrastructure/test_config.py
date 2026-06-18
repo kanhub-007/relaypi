@@ -15,9 +15,9 @@ from relaypi.config import Config
 
 @pytest.fixture
 def clean_env(monkeypatch):
-    """Strip every HAL_* var so tests start from a known empty state."""
+    """Strip every RELAYPI_* var so tests start from a known empty state."""
     for key in list(os.environ):
-        if key.startswith("HAL_"):
+        if key.startswith("RELAYPI_"):
             monkeypatch.delenv(key, raising=False)
     return monkeypatch
 

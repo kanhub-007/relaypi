@@ -4,7 +4,7 @@ This is the only place that knows about concrete adapter classes. Everything
 else (Relay, routers, clients) depends on ports.
 
 The per-chat PI client factory is defined here: it builds a
-SubprocessStreamTransport + PIRpcClient for a given session path, with the HAL
+SubprocessStreamTransport + PIRpcClient for a given session path, with the
 project dir as cwd and ``-a`` to trust it for non-interactive RPC.
 """
 
@@ -27,8 +27,8 @@ from relaypi.infrastructure.session_router_impl import PerChatSessionRouter
 
 logger = logging.getLogger(__name__)
 
-# PI RPC invocation: --mode rpc, -a (trust the HAL project dir), --session <path>.
-# cwd is set to the HAL project dir so PI loads AGENTS.md + .pi/SYSTEM.md +
+# PI RPC invocation: --mode rpc, -a (trust the project dir), --session <path>.
+# cwd is set to the project dir so PI loads AGENTS.md + .pi/SYSTEM.md +
 # .pi/extensions/* for this profile. --session is load-bearing for isolation
 # AND persistence (resumes the chat's history on restart; --no-session would
 # discard both).
@@ -40,7 +40,7 @@ def build_pi_argv(pi_bin: str, session_path: str) -> list[str]:
     """Assemble the PI RPC invocation for one chat session.
 
     One home for "what flags PI needs" so adding/reordering a flag is a single
-    edit (L2). ``-a`` trusts the HAL project dir; ``--session`` is load-bearing
+    edit (L2). ``-a`` trusts the project dir; ``--session`` is load-bearing
     for both isolation and persistence.
     """
     return [pi_bin, *_PI_BASE_ARGV, "--session", session_path]
