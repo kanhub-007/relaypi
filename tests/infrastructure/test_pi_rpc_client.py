@@ -9,6 +9,8 @@ Covers the protocol traps from docs/development.md:
   * ``extension_ui_request`` is always answered (no deadlock)
 """
 
+import asyncio
+
 import pytest
 
 from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
@@ -170,3 +172,28 @@ async def test_select_input_editor_requests_auto_responded_with_empty_value():
         assert ui == [
             {"type": "extension_ui_response", "id": "u1", "value": ""}
         ], method
+
+
+async def test_pi_dying_mid_turn_raises_and_does_not_hang():
+    # PI accepts the prompt then its stdout closes (crash). The reader's finally
+    # synthesizes an agent_end so the turn's event loop exits; but the following
+    # get_last_assistant_text command can never be answered (reader is dead).
+    # The client MUST raise rather than hang forever on a dead stream.
+    transport = FakeStreamTransport()
+    transport.script_response(
+        1,
+        [{"type": "response", "id": 1, "command": "prompt", "success": True}],
+    )
+    transport.script_eof_after(1)  # crash immediately after the prompt ack
+
+    client = await _start(transport)
+    try:
+        with pytest.raises(RuntimeError, match="PI stream closed"):
+            await asyncio.wait_for(
+                client.prompt_and_collect("[from=koena] hi"), timeout=2.0
+            )
+    finally:
+        await client.stop()
+
+    # Observable: the client is marked dead so the router can restart it.
+    assert client.is_alive() is False

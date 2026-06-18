@@ -105,7 +105,15 @@ class PIRpcClient(AgentClient):
         return (resp.get("data") or {}).get("text") or ""
 
     async def _send_command(self, cmd: dict) -> dict:
-        """Send a command with a fresh id and await its matching response."""
+        """Send a command with a fresh id and await its matching response.
+
+        Raises RuntimeError immediately if the stream is already dead — a
+        command can never be answered once the reader has stopped, so waiting
+        would hang forever. (A command already in flight when the stream dies
+        is failed by the reader's finally via _fail_pending.)
+        """
+        if not self._alive:
+            raise RuntimeError("PI stream closed")
         req_id = self._next_id = self._next_id + 1
         payload = {"id": req_id, **cmd}
         fut: asyncio.Future[dict] = asyncio.get_running_loop().create_future()

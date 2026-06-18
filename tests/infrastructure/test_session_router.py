@@ -75,3 +75,25 @@ async def test_dead_client_is_restarted_on_next_access():
     assert restarted.is_alive() is True
     assert len(factory.created_paths) == 2
     assert factory.created_paths[0] == factory.created_paths[1]
+
+
+async def test_restarting_one_chat_does_not_disturb_another():
+    # Process isolation: chat A's restart must not touch chat B's live client.
+    factory = RecordingFactory()
+    router = PerChatSessionRouter(session_root="hal/sessions", client_factory=factory)
+
+    client_a = await router.get_or_create("123")
+    client_b = await router.get_or_create("456")
+
+    # Chat A crashes.
+    client_a._alive = False  # type: ignore[attr-defined]
+    restarted_a = await router.get_or_create("123")
+
+    # Chat A got a fresh client at the same path...
+    assert restarted_a is not client_a
+    assert factory.created_paths.count(str(Path("hal/sessions/chat_123.jsonl"))) == 2
+    # ...while chat B is untouched: same instance, still alive, never re-created.
+    client_b_again = await router.get_or_create("456")
+    assert client_b_again is client_b
+    assert client_b.is_alive() is True
+    assert factory.created_paths.count(str(Path("hal/sessions/chat_456.jsonl"))) == 1

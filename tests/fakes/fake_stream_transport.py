@@ -18,10 +18,19 @@ class FakeStreamTransport:
         self.writes: list[dict] = []
         self._out: asyncio.Queue[bytes] = asyncio.Queue()
         self._script: dict[int, list[dict]] = {}
+        self._eof_after: set[int] = set()
 
     def script_response(self, cmd_id: int, lines: list[dict]) -> None:
         """Queue these JSON lines for read() once command ``cmd_id`` is written."""
         self._script[cmd_id] = list(lines)
+
+    def script_eof_after(self, cmd_id: int) -> None:
+        """After command ``cmd_id``'s response lines are queued, deliver EOF (b"").
+
+        Simulates a PI subprocess crash mid-turn: the prompt was accepted and
+        its response sent, then stdout closed before the turn finished.
+        """
+        self._eof_after.add(cmd_id)
 
     async def write(self, data: bytes) -> None:
         for raw in data.split(b"\n"):
@@ -33,8 +42,11 @@ class FakeStreamTransport:
             # only queue scripted lines for commands that expect a response.
             if cmd.get("type") == "extension_ui_response":
                 continue
-            for line in self._script.get(int(cmd.get("id", -1)), []):
+            cid = int(cmd.get("id", -1))
+            for line in self._script.get(cid, []):
                 await self._out.put((json.dumps(line) + "\n").encode("utf-8"))
+            if cid in self._eof_after:
+                await self._out.put(b"")  # EOF sentinel -> read() returns b""
 
     async def read(self, n: int) -> bytes:
         """Return the next scripted line, or b"" once EOF has been signalled."""
