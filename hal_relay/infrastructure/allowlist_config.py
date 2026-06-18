@@ -62,6 +62,14 @@ def load_allowlist(yaml_text: str) -> ConfigAllowlist:
     for entry in data.get("groups", []):
         gid = int(entry["id"])
         mode = entry["mode"]
+        if mode not in ("open", "restricted"):
+            # Surface misconfiguration loudly at startup rather than silently
+            # degrading to restricted/open behaviour (a typo like 'opne' or 'OPEN'
+            # would otherwise change a group's trust posture invisibly).
+            raise ValueError(
+                f"invalid group mode {mode!r} for group {gid}; "
+                "expected 'open' or 'restricted'"
+            )
         members = frozenset(int(m) for m in entry.get("members", []))
         groups[gid] = GroupConfig(mode=mode, members=members)
     return ConfigAllowlist(dm_users=dm_users, groups=groups)

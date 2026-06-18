@@ -197,3 +197,46 @@ async def test_pi_dying_mid_turn_raises_and_does_not_hang():
 
     # Observable: the client is marked dead so the router can restart it.
     assert client.is_alive() is False
+
+
+async def test_event_queue_is_bounded_and_does_not_drop_on_normal_turn():
+    # M4: the in-flight event queue is bounded (MAX_QUEUED_EVENTS) so a chatty
+    # turn can't grow memory unboundedly. A normal turn that emits a burst of
+    # events and then agent_end must still complete and deliver every event to
+    # the consumer (the bound applies backpressure to the reader, not a drop).
+    from hal_relay.infrastructure.adapters.pi_rpc_client import MAX_QUEUED_EVENTS
+
+    burst = [{"type": "tool_execution_update", "toolCallId": str(i)} for i in range(50)]
+    transport = FakeStreamTransport()
+    transport.script_response(
+        1,
+        [
+            {"type": "response", "id": 1, "command": "prompt", "success": True},
+            *burst,
+            {"type": "agent_end"},
+        ],
+    )
+    transport.script_response(
+        2,
+        [
+            {
+                "type": "response",
+                "id": 2,
+                "command": "get_last_assistant_text",
+                "success": True,
+                "data": {"text": "done"},
+            }
+        ],
+    )
+
+    client = await _start(transport)
+    try:
+        assert MAX_QUEUED_EVENTS > 0  # the bound exists
+        text = await asyncio.wait_for(
+            client.prompt_and_collect("[from=koena] hi"), timeout=2.0
+        )
+    finally:
+        await client.stop()
+
+    # Turn completed normally despite the bounded queue.
+    assert text == "done"

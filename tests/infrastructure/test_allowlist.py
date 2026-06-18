@@ -6,6 +6,8 @@ boolean outcome. No mocks, no interaction assertions.
 
 import textwrap
 
+import pytest
+
 from hal_relay.core.application.parse import parse_inbound
 from hal_relay.core.domain.entities.group_config import GroupConfig
 from hal_relay.infrastructure.allowlist_config import ConfigAllowlist, load_allowlist
@@ -54,6 +56,25 @@ def test_restricted_group_allows_only_listed_members():
     )
     # Non-member -> dropped
     assert allowlist.allows(_msg(-100222000, user_id=999, chat_type="group")) is False
+
+
+# --- Config validation (M2): invalid modes surface at load time ---
+
+
+def test_load_allowlist_rejects_unknown_mode():
+    for bad in ("opne", "OPEN", "public", "", "allow"):
+        with pytest.raises(ValueError, match="invalid group mode"):
+            load_allowlist(f"groups:\n  - id: -1\n    mode: {bad}\n"), bad
+
+
+def test_load_allowlist_accepts_open_and_restricted():
+    allowlist = load_allowlist(
+        "groups:\n"
+        "  - id: -1\n    mode: open\n"
+        "  - id: -2\n    mode: restricted\n    members: [1]\n"
+    )
+    assert allowlist.allows(_msg(-1, user_id=555, chat_type="group")) is True
+    assert allowlist.allows(_msg(-2, user_id=1, chat_type="group")) is True
 
 
 # --- Edge cases (the scenario's "also test" list) ---

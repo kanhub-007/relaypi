@@ -68,9 +68,17 @@ class TelegramyMCPSender(MessageSender):
             headers=self._headers(init=True),
         )
         resp.raise_for_status()
-        self._session_id = resp.headers.get("mcp-session-id")
-        # The server waits for this notification before processing requests.
-        await self._client.post(
+        # Per MCP spec the server waits for notifications/initialized before
+        # processing requests. Commit the session id ONLY after that notification
+        # succeeds — if it fails (transient 5xx, telegramy restarting), leaving
+        # _session_id set would wedge the sender: every later call would skip the
+        # handshake while the server never received the notification.
+        session_id = resp.headers.get("mcp-session-id")
+        # The server waits for this notification before processing requests; a
+        # 202 Accepted is the success path. Raise on anything else so the
+        # session id is NOT committed (see comment above) and the next call
+        # retries the whole handshake.
+        notify_resp = await self._client.post(
             self._url,
             json={
                 "jsonrpc": "2.0",
@@ -79,6 +87,8 @@ class TelegramyMCPSender(MessageSender):
             },
             headers=self._headers(),
         )
+        notify_resp.raise_for_status()
+        self._session_id = session_id
 
     async def _call(self, method: str, params: dict) -> dict:
         self._req_id += 1

@@ -57,6 +57,31 @@ def test_parse_returns_none_when_text_missing():
     assert parse_inbound(event) is None
 
 
+def test_parse_returns_none_when_sender_id_missing():
+    # No sender id -> can never be allowlisted -> fail closed at parse time.
+    event = {
+        "message": {
+            "chat": {"id": "1", "type": "private"},
+            "from": {"first_name": "X"},
+            "text": "hi",
+        }
+    }
+    assert parse_inbound(event) is None
+
+
+def test_parse_returns_none_when_sender_id_not_an_int():
+    # A non-numeric id must not raise (which would be masked downstream); it
+    # returns None so the message is dropped cleanly.
+    event = {
+        "message": {
+            "chat": {"id": "1", "type": "private"},
+            "from": {"id": "abc"},
+            "text": "hi",
+        }
+    }
+    assert parse_inbound(event) is None
+
+
 def test_parse_strips_surrounding_whitespace_from_text():
     assert parse_inbound(_msg_event(text="  hello  ")).text == "hello"
 

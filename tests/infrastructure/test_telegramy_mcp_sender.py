@@ -13,6 +13,7 @@ MCP method/arguments are issued; the session id is captured and replayed.
 import json
 
 import httpx
+import pytest
 
 from hal_relay.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
 
@@ -120,9 +121,52 @@ async def test_mcp_error_raises():
 
     sender = TelegramyMCPSender(MCP_URL, transport=httpx.MockTransport(handler))
     try:
-        import pytest
-
         with pytest.raises(RuntimeError, match="telegramy MCP error"):
             await sender.send_message("123", "hi")
+    finally:
+        await sender.close()
+
+
+async def test_partial_handshake_failure_retries_full_handshake_on_next_call():
+    # C1: if the notifications/initialized POST fails, the sender must NOT keep
+    # the session id (which would skip the handshake forever). The next call
+    # must re-run initialize from scratch.
+    attempts = {"init_count": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content.decode("utf-8"))
+        if body.get("method") == "initialize":
+            attempts["init_count"] += 1
+            return httpx.Response(
+                200,
+                headers={"mcp-session-id": "sess"},
+                json={"jsonrpc": "2.0", "id": body["id"], "result": {}},
+            )
+        if body.get("method") == "notifications/initialized":
+            # First time: fail (e.g. telegramy briefly 5xx'd). Second time: ok.
+            if attempts["init_count"] == 1:
+                return httpx.Response(500, text="transient")
+            return httpx.Response(202)
+        # tools/call
+        return httpx.Response(
+            200,
+            json={
+                "jsonrpc": "2.0",
+                "id": body["id"],
+                "result": {"content": [{"type": "text", "text": "ok"}]},
+            },
+        )
+
+    sender = TelegramyMCPSender(MCP_URL, transport=httpx.MockTransport(handler))
+    try:
+        # First send fails during the notification step.
+        with pytest.raises(httpx.HTTPStatusError):
+            await sender.send_message("123", "first")
+        # Sender did NOT commit the session id.
+        assert sender._session_id is None  # type: ignore[attr-defined]
+
+        # Second send retries the FULL handshake and succeeds.
+        await sender.send_message("123", "second")
+        assert attempts["init_count"] == 2  # initialize ran twice
     finally:
         await sender.close()

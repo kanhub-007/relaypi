@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 # Defaults are generous; tests pass shorter values via the constructor.
 DEFAULT_TURN_TIMEOUT = 600.0
 DEFAULT_ABORT_TIMEOUT = 15.0
+# Bound on events queued for an in-flight turn. A chatty PI turn (many
+# tool_execution_update deltas from a long bash run) could otherwise grow the
+# queue unboundedly. With a maxsize the reader blocks on put -> PI's stdout
+# fills -> PI itself blocks, which is the correct backpressure.
+MAX_QUEUED_EVENTS = 1000
 
 
 class PIRpcClient(AgentClient):
@@ -62,7 +67,7 @@ class PIRpcClient(AgentClient):
         # Set up the event queue BEFORE sending the command: the reader may emit
         # events (incl. agent_end) the instant the prompt is accepted, and we must
         # not drop them in the gap between "response resolved" and "now listening".
-        self._event_queue = asyncio.Queue()
+        self._event_queue = asyncio.Queue(maxsize=MAX_QUEUED_EVENTS)
         try:
             resp = await self._send_command({"type": "prompt", "message": message})
             if not resp.get("success"):
