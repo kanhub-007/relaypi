@@ -37,23 +37,47 @@ class Relay:
         self._allowlist = allowlist
         self._chat_locks: dict[str, asyncio.Lock] = {}
         self._tasks: set[asyncio.Task[None]] = set()
+        self._started = False  # H1: run()/drain() are one-shot
+        self._stopping = (
+            False  # H2: cooperative stop signal checked before each dispatch
+        )
 
     async def run(self) -> None:
-        """Read the source without blocking; dispatch each message as its own task."""
-        async for event in self._source.events():
-            msg = parse_inbound(event)
-            if msg is None:
-                continue
-            if not self._allowlist.allows(msg):
-                logger.info(
-                    "dropped message from %s in chat %s",
-                    msg.sender_user_id,
-                    msg.chat_id,
-                )
-                continue
-            task = asyncio.create_task(self._handle(msg))
-            self._tasks.add(task)
-            task.add_done_callback(self._tasks.discard)
+        """Read the source without blocking; dispatch each message as its own task.
+
+        One-shot: calling run() (or drain()) twice raises — re-iterating a
+        finite fake source or re-subscribing a live WebSocket would silently
+        double-process. Cooperative shutdown: stop() sets _stopping, and the
+        loop checks it before pulling each event so no new work is dispatched
+        after stop (hard interruption of a blocked read still relies on task
+        cancellation at asyncio shutdown).
+        """
+        if self._started:
+            raise RuntimeError("Relay already started")
+        self._started = True
+        it = self._source.events().__aiter__()
+        try:
+            while not self._stopping:
+                try:
+                    event = await it.__anext__()
+                except StopAsyncIteration:
+                    break
+                msg = parse_inbound(event)
+                if msg is None:
+                    continue
+                if not self._allowlist.allows(msg):
+                    logger.info(
+                        "dropped message from %s in chat %s",
+                        msg.sender_user_id,
+                        msg.chat_id,
+                    )
+                    continue
+                task = asyncio.create_task(self._handle(msg))
+                self._tasks.add(task)
+                task.add_done_callback(self._tasks.discard)
+        finally:
+            # Release the async generator (lets the WS connection close promptly).
+            await it.aclose()
 
     async def _handle(self, msg: InboundMessage) -> None:
         # Per-chat serialization: never prompt a streaming PI.
@@ -77,12 +101,13 @@ class Relay:
                     logger.exception("also failed to send error reply")
 
     async def drain(self) -> None:
-        """Run to completion against a finite source (test helper)."""
+        """Run to completion against a finite source (test helper). One-shot."""
         await self.run()
         await asyncio.gather(*self._tasks, return_exceptions=True)
 
     async def stop(self) -> None:
-        """Graceful shutdown: wait for in-flight turns, stop clients, close sender."""
+        """Graceful shutdown: signal the loop, wait for in-flight turns, close deps."""
+        self._stopping = True
         await asyncio.gather(*self._tasks, return_exceptions=True)
         await self._router.stop_all()
         await self._sender.close()
