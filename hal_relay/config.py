@@ -1,4 +1,10 @@
-"""Config — load relay configuration from env vars + allowlist.yaml.
+"""Config — resolve relay configuration from environment variables.
+
+Config is PURE env-parsing: constructing it does no file I/O and no PATH
+probes-that-matter. The allowlist (which reads a file) is loaded separately by
+the composition root via load_allowlist_from_path, so a unit test of Config
+never needs to touch the filesystem, and Config changes for only one reason
+(a new env var) rather than two (env var + new allowlist feature).
 
 Environment variables (all optional; listed with defaults):
   HAL_RELAY_WS_URL    ws://localhost:8765            telegramy WebSocket
@@ -6,16 +12,11 @@ Environment variables (all optional; listed with defaults):
   HAL_PI_BIN          shutil.which("pi") or "pi"     PI executable (Windows: .cmd shim)
   HAL_PROJECT_DIR     hal                            HAL project dir (AGENTS.md + .pi/)
   HAL_SESSION_DIR     hal/sessions                   per-chat .jsonl root
-  HAL_ALLOWLIST       config/allowlist.yaml          allowlist config file
-
-The allowlist is read from disk here (the only I/O in this module) and parsed
-via load_allowlist, which is independently unit-tested.
+  HAL_ALLOWLIST       config/allowlist.yaml          allowlist config file path
 """
 
 import os
 import shutil
-
-from hal_relay.infrastructure.allowlist_config import ConfigAllowlist, load_allowlist
 
 DEFAULT_WS_URL = "ws://localhost:8765"
 DEFAULT_MCP_URL = "http://localhost:8005/mcp"
@@ -25,7 +26,7 @@ DEFAULT_ALLOWLIST = "config/allowlist.yaml"
 
 
 class Config:
-    """Relay configuration resolved from the environment + allowlist file."""
+    """Relay configuration resolved purely from the environment."""
 
     def __init__(self) -> None:
         self.telegramy_ws_url = os.environ.get("HAL_RELAY_WS_URL", DEFAULT_WS_URL)
@@ -37,13 +38,3 @@ class Config:
         self.project_dir = os.environ.get("HAL_PROJECT_DIR", DEFAULT_PROJECT_DIR)
         self.session_dir = os.environ.get("HAL_SESSION_DIR", DEFAULT_SESSION_DIR)
         self.allowlist_path = os.environ.get("HAL_ALLOWLIST", DEFAULT_ALLOWLIST)
-        self.allowlist: ConfigAllowlist = self._load_allowlist()
-
-    def _load_allowlist(self) -> ConfigAllowlist:
-        try:
-            with open(self.allowlist_path, encoding="utf-8") as fh:
-                text = fh.read()
-        except FileNotFoundError:
-            # No allowlist file -> empty allowlist (drops everything). Fail closed.
-            text = ""
-        return load_allowlist(text)

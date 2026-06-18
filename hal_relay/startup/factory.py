@@ -13,6 +13,7 @@ import logging
 from hal_relay.config import Config
 from hal_relay.core.application.relay import Relay
 from hal_relay.core.domain.interfaces.agent_client import AgentClient
+from hal_relay.core.domain.interfaces.allowlist import Allowlist
 from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
 from hal_relay.infrastructure.adapters.subprocess_stream_transport import (
     SubprocessStreamTransport,
@@ -21,6 +22,7 @@ from hal_relay.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPS
 from hal_relay.infrastructure.adapters.websocket_message_source import (
     WebSocketMessageSource,
 )
+from hal_relay.infrastructure.allowlist_config import load_allowlist_from_path
 from hal_relay.infrastructure.session_router_impl import PerChatSessionRouter
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,16 @@ _PI_BASE_ARGV = ["--mode", "rpc", "-a"]
 _SUBPROCESS_SHUTDOWN_TIMEOUT = 5.0
 
 
+def build_pi_argv(pi_bin: str, session_path: str) -> list[str]:
+    """Assemble the PI RPC invocation for one chat session.
+
+    One home for "what flags PI needs" so adding/reordering a flag is a single
+    edit (L2). ``-a`` trusts the HAL project dir; ``--session`` is load-bearing
+    for both isolation and persistence.
+    """
+    return [pi_bin, *_PI_BASE_ARGV, "--session", session_path]
+
+
 def create_relay(config: Config | None = None) -> Relay:
     """Build a fully-wired Relay from configuration."""
     cfg = config or Config()
@@ -43,14 +55,15 @@ def create_relay(config: Config | None = None) -> Relay:
         session_root=cfg.session_dir,
         client_factory=_make_client_factory(cfg),
     )
-    return Relay(source=source, router=router, sender=sender, allowlist=cfg.allowlist)
+    allowlist: Allowlist = load_allowlist_from_path(cfg.allowlist_path)
+    return Relay(source=source, router=router, sender=sender, allowlist=allowlist)
 
 
 def _make_client_factory(cfg: Config):
     """Build the async (session_path) -> AgentClient factory for the router."""
 
     async def factory(session_path: str) -> AgentClient:
-        argv = [cfg.pi_bin, *_PI_BASE_ARGV, "--session", session_path]
+        argv = build_pi_argv(cfg.pi_bin, session_path)
         transport = SubprocessStreamTransport(
             argv=argv,
             cwd=cfg.project_dir,

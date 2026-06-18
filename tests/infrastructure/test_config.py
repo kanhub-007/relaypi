@@ -1,11 +1,11 @@
-"""Tests for Config — env-var parsing + allowlist wiring.
+"""Tests for Config — pure env-var parsing (no file I/O).
 
-``load_allowlist`` (the YAML -> ConfigAllowlist parser) is already covered in
-test_allowlist.py; here we cover the Config dataclass that reads env vars and
-resolves the PI binary path. File I/O is the only untestable bit (and trivial).
+``load_allowlist`` (YAML text) and ``load_allowlist_from_path`` (file) are
+covered in test_allowlist.py. Config itself must not touch the filesystem.
 """
 
 import os
+import shutil
 
 import pytest
 
@@ -21,9 +21,7 @@ def clean_env(monkeypatch):
     return monkeypatch
 
 
-def test_defaults_when_no_env_vars_set(clean_env, monkeypatch):
-    import shutil
-
+def test_defaults_when_no_env_vars_set(clean_env):
     cfg = Config()
 
     assert cfg.telegramy_ws_url == "ws://localhost:8765"
@@ -60,44 +58,14 @@ def test_explicit_pi_bin_takes_precedence_over_which(clean_env, monkeypatch):
     assert cfg.pi_bin == "/explicit/path/pi"
 
 
-def test_allowlist_loaded_from_config_file(clean_env, monkeypatch, tmp_path):
-    from hal_relay.core.application.parse import parse_inbound
-    from tests.fakes.event_helpers import msg_event
+def test_config_does_not_read_the_allowlist_file(clean_env, monkeypatch, tmp_path):
+    # M1: constructing Config must not do file I/O. Pointing allowlist_path at a
+    # nonexistent file must NOT raise (and must NOT load anything) — the factory
+    # loads the allowlist later, separately.
+    missing = tmp_path / "does_not_exist.yaml"
+    monkeypatch.setenv("HAL_ALLOWLIST", str(missing))
 
-    allowlist = tmp_path / "allowlist.yaml"
-    allowlist.write_text(
-        "dm_users: [123]\n" "groups:\n" "  - id: -100\n" "    mode: open\n"
-    )
-    monkeypatch.setenv("HAL_ALLOWLIST", str(allowlist))
+    cfg = Config()  # no raise
 
-    cfg = Config()
-
-    # Assert on the allowlist's PUBLIC behaviour, not its decomposed internals.
-    assert (
-        cfg.allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123)))
-        is True
-    )
-    assert (
-        cfg.allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=999)))
-        is False
-    )
-    assert (
-        cfg.allowlist.allows(
-            parse_inbound(msg_event("-100", "x", "hi", chat_type="group", user_id=555))
-        )
-        is True
-    )
-
-
-def test_missing_allowlist_file_fails_closed(clean_env, monkeypatch, tmp_path):
-    # An absent allowlist -> empty allowlist -> everything dropped (fail closed).
-    monkeypatch.setenv("HAL_ALLOWLIST", str(tmp_path / "does_not_exist.yaml"))
-    cfg = Config()
-
-    from hal_relay.core.application.parse import parse_inbound
-    from tests.fakes.event_helpers import msg_event
-
-    assert (
-        cfg.allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123)))
-        is False
-    )
+    assert cfg.allowlist_path == str(missing)
+    assert not hasattr(cfg, "allowlist")  # Config no longer holds an allowlist

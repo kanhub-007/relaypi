@@ -116,7 +116,7 @@ async def test_factory_builds_relay_with_concrete_adapters(
         # The source/sender/router are the real prod adapters.
         assert isinstance(relay._source, WebSocketMessageSource)  # type: ignore[attr-defined]
         assert isinstance(relay._sender, FakeMessageSender) is False  # real sender
-        # Allowlist came from Config and gates correctly.
+        # Allowlist was loaded by the factory from cfg.allowlist_path and gates.
         from hal_relay.core.application.parse import parse_inbound
 
         assert relay._allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123)))  # type: ignore[attr-defined]

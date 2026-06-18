@@ -1,14 +1,20 @@
 """ConfigAllowlist — static allowlist loaded from YAML config.
 
 Implements the Allowlist port. Pure decision logic (no I/O in ``allows``);
-loading from YAML lives in ``load_allowlist`` below.
+loading from YAML text lives in ``load_allowlist`` below, and loading from a
+file path lives in ``load_allowlist_from_path`` (kept here so the I/O failure
+handling for the trust boundary has one home).
 """
+
+import logging
 
 import yaml
 
 from hal_relay.core.domain.entities.group_config import GroupConfig
 from hal_relay.core.domain.entities.inbound_message import InboundMessage
 from hal_relay.core.domain.interfaces.allowlist import Allowlist
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigAllowlist(Allowlist):
@@ -73,3 +79,25 @@ def load_allowlist(yaml_text: str) -> ConfigAllowlist:
         members = frozenset(int(m) for m in entry.get("members", []))
         groups[gid] = GroupConfig(mode=mode, members=members)
     return ConfigAllowlist(dm_users=dm_users, groups=groups)
+
+
+def load_allowlist_from_path(path: str) -> Allowlist:
+    """Load an Allowlist from a YAML file, failing closed on any read error.
+
+    Keeps file I/O (and its failure modes) out of Config and the application
+    layer. A missing/unreadable file yields an empty allowlist (everything
+    dropped) with a logged warning — fail-closed, never a crash.
+
+    Args:
+        path: Path to the allowlist YAML file.
+
+    Returns:
+        A ConfigAllowlist (typed as the Allowlist port).
+    """
+    try:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError as exc:
+        logger.warning("could not read allowlist at %s (%s); failing closed", path, exc)
+        text = ""
+    return load_allowlist(text)
