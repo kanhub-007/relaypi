@@ -34,6 +34,8 @@ Clean Architecture, Python flavor. Dependencies flow inward:
 - `core/domain/` — entities (transport DTOs) + interfaces (ports). Imports nothing internal.
 - `core/application/` — `Relay`, `parse`, `format_prompt`. Imports domain only.
 - `infrastructure/` — adapters + `ConfigAllowlist` + `PerChatSessionRouter`.
+  Protocol mechanics (framing, correlation, demuxing) are extracted into
+  `PiRpcProtocol` so they're testable independently from turn lifecycle.
 - `startup/factory.py` — the only place that knows concrete adapter classes.
 
 Verified by grep in CI: domain never imports application/infrastructure;
@@ -43,8 +45,8 @@ application never imports infrastructure.
 
 ## ⚠️ The four PI RPC protocol traps
 
-The single most likely source of future bugs. Lifted from `PIRpcClient`
-implementation notes; all four are honoured by the current code.
+The single most likely source of future bugs. Lifted from `PiRpcProtocol` /
+`PIRpcClient` implementation notes; all four are honoured by the current code.
 
 ### 1. LF-only framing
 
@@ -83,5 +85,6 @@ corrupt each other. Always pass `--session <path>` with a chat-specific path.
 `agent_end` (and other events) can arrive in the gap between "the `response`
 future resolved" and "we start listening on the event queue". If you set the
 queue after awaiting the response, that event is dropped and the turn hangs.
-Pattern: create the queue, *then* send, *then* await response, *then* read
-events — all inside one `try`/`finally` that clears the queue.
+Pattern: `PiRpcProtocol.begin_turn()` before `send_command("prompt")`,
+then await the response, then read events — all inside one `try`/`finally`
+that calls `end_turn()`.
