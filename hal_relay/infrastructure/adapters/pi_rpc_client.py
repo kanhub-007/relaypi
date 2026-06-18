@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 
+from hal_relay.core.domain.agent_error import AgentError
 from hal_relay.core.domain.interfaces.agent_client import AgentClient
 from hal_relay.infrastructure.adapters.stream_transport import StreamTransport
 
@@ -71,7 +72,7 @@ class PIRpcClient(AgentClient):
         try:
             resp = await self._send_command({"type": "prompt", "message": message})
             if not resp.get("success"):
-                raise RuntimeError(f"PI rejected prompt: {resp.get('error')}")
+                raise AgentError(f"PI rejected prompt: {resp.get('error')}")
 
             while True:
                 try:
@@ -80,7 +81,9 @@ class PIRpcClient(AgentClient):
                     )
                 except asyncio.TimeoutError:
                     await self.abort()
-                    raise
+                    raise AgentError(
+                        f"turn timed out after {self._turn_timeout}s and was aborted"
+                    )
                 if event.get("type") == "agent_end":
                     break
         finally:
@@ -118,7 +121,7 @@ class PIRpcClient(AgentClient):
         is failed by the reader's finally via _fail_pending.)
         """
         if not self._alive:
-            raise RuntimeError("PI stream closed")
+            raise AgentError("PI stream closed")
         req_id = self._next_id = self._next_id + 1
         payload = {"id": req_id, **cmd}
         fut: asyncio.Future[dict] = asyncio.get_running_loop().create_future()
@@ -149,7 +152,7 @@ class PIRpcClient(AgentClient):
             logger.exception("PI reader loop crashed")
         finally:
             self._alive = False
-            self._fail_pending(RuntimeError("PI stream closed"))
+            self._fail_pending(AgentError("PI stream closed"))
             if self._event_queue is not None:
                 # Unblock a turn waiting for events so it doesn't hang on timeout.
                 self._event_queue.put_nowait({"type": "agent_end"})

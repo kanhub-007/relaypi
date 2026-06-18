@@ -188,7 +188,9 @@ async def test_pi_dying_mid_turn_raises_and_does_not_hang():
 
     client = await _start(transport)
     try:
-        with pytest.raises(RuntimeError, match="PI stream closed"):
+        from hal_relay.core.domain.agent_error import AgentError
+
+        with pytest.raises(AgentError, match="PI stream closed"):
             await asyncio.wait_for(
                 client.prompt_and_collect("[from=koena] hi"), timeout=2.0
             )

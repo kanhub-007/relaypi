@@ -12,6 +12,8 @@ import logging
 
 from hal_relay.core.application.format_prompt import format_prompt
 from hal_relay.core.application.parse import parse_inbound
+from hal_relay.core.application.presenter import ERROR_REPLY_TEXT
+from hal_relay.core.domain.agent_error import AgentError
 from hal_relay.core.domain.entities.inbound_message import InboundMessage
 from hal_relay.core.domain.interfaces.allowlist import Allowlist
 from hal_relay.core.domain.interfaces.message_sender import MessageSender
@@ -88,17 +90,26 @@ class Relay:
                 prompt = format_prompt(msg)
                 text = await client.prompt_and_collect(prompt.text)
                 await self._sender.send_message(msg.chat_id, text)
+            except AgentError as exc:
+                # Expected operational failure (PI down/rejected/timed out).
+                # Log at WARNING (operational, not a bug) and tell the user.
+                logger.warning("agent failure in chat %s: %s", msg.chat_id, exc)
+                await self._safe_send_error(msg.chat_id)
             except Exception:
-                # Never let one message's failure kill the relay or leave the
-                # user in silence. Report the error back to the chat.
-                logger.exception("failed to handle message in chat %s", msg.chat_id)
-                try:
-                    await self._sender.send_message(
-                        msg.chat_id,
-                        "⚠️ Something went wrong processing that. Try again.",
-                    )
-                except Exception:
-                    logger.exception("also failed to send error reply")
+                # Unexpected (a programming bug). Log the full traceback so it
+                # surfaces, and still tell the user something went wrong — but
+                # never let one message's failure kill the relay.
+                logger.exception(
+                    "unexpected error handling message in chat %s", msg.chat_id
+                )
+                await self._safe_send_error(msg.chat_id)
+
+    async def _safe_send_error(self, chat_id: str) -> None:
+        """Best-effort error reply; never escalates if the sender is also down."""
+        try:
+            await self._sender.send_message(chat_id, ERROR_REPLY_TEXT)
+        except Exception:
+            logger.exception("also failed to send error reply")
 
     async def drain(self) -> None:
         """Run to completion against a finite source (test helper). One-shot."""
