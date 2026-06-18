@@ -16,21 +16,52 @@ from hal_relay.startup.factory import create_relay
 logger = logging.getLogger(__name__)
 
 
-def _is_connection_error(exc: BaseException) -> bool:
-    """True if ``exc`` looks like a transport-connection failure (e.g. telegramy down).
+# Connection-classification: match by exception CLASS (isinstance), not by
+# type-name string. Name-based matching breaks silently if a library renames an
+# exception (websockets has across majors) or if httpx raises a class we didn't
+# enumerate. Imports are guarded so the module loads even if a library version
+# lacks one of them.
+_CONNECTION_ERRORS: tuple[type[BaseException], ...] = (
+    OSError,  # ConnectionRefusedError, ConnectionResetError, etc.
+)
+try:  # websockets is a hard dep, but guard against rename/removal of exceptions
+    from websockets.exceptions import InvalidHandshake as _WS_InvalidHandshake
 
-    We don't want a raw traceback for the very common 'dependencies not running' case;
-    a clean log line + non-zero exit is the right UX. Everything else still raises.
+    _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidHandshake)
+    try:
+        from websockets.exceptions import InvalidStatus as _WS_InvalidStatus
+
+        _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidStatus)
+    except ImportError:
+        pass
+    try:
+        from websockets.exceptions import InvalidURI as _WS_InvalidURI
+
+        _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidURI)
+    except ImportError:
+        pass
+except ImportError:
+    pass
+try:  # httpx connect errors (telegramy MCP down)
+    import httpx as _httpx
+
+    _CONNECTION_ERRORS = (
+        *_CONNECTION_ERRORS,
+        _httpx.ConnectError,
+        _httpx.RemoteProtocolError,
+    )
+except ImportError:
+    pass
+
+
+def _is_connection_error(exc: BaseException) -> bool:
+    """True if ``exc`` is a transport-connection failure (e.g. telegramy down).
+
+    We don't want a raw traceback for the very common 'dependencies not running'
+    case; a clean log line + non-zero exit is the right UX. Everything else
+    still raises.
     """
-    name = type(exc).__name__
-    return name in {
-        "ConnectionRefusedError",
-        "ConnectionResetError",
-        "OSError",
-        "InvalidStatus",
-        "InvalidHandshake",
-        "InvalidURI",
-    }
+    return isinstance(exc, _CONNECTION_ERRORS)
 
 
 async def main() -> int:

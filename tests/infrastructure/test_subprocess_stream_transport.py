@@ -69,3 +69,14 @@ async def test_close_kills_a_process_that_will_not_exit():
     # close() must return within a bounded time (not hang) and leave it dead.
     await asyncio.wait_for(transport.close(), timeout=3.0)
     assert proc.returncode is not None  # killed -> has an exit code
+
+
+def test_subprocess_transport_satisfies_stream_transport_protocol():
+    # L1: the Protocol is @runtime_checkable, so the structural-typing claim is
+    # actually enforced. SubprocessStreamTransport and FakeStreamTransport both
+    # must satisfy it.
+    from hal_relay.infrastructure.adapters.stream_transport import StreamTransport
+    from tests.fakes.fake_stream_transport import FakeStreamTransport
+
+    assert isinstance(SubprocessStreamTransport(argv=_echo_argv()), StreamTransport)
+    assert isinstance(FakeStreamTransport(), StreamTransport)

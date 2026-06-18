@@ -5,8 +5,14 @@ first message arrives, so a chats filter would drop legitimate DMs; the
 allowlist gates which messages actually get processed.
 
 This is a thin adapter over the ``websockets`` library — the subscription
-protocol and reconnect/retry behaviour belong here, not in the application
-layer. The Relay depends on the MessageSource port, never on this class.
+protocol belongs here, not in the application layer. The Relay depends on the
+MessageSource port, never on this class.
+
+Reconnect/backoff is deliberately NOT implemented: if telegramy is briefly
+unavailable, ``websockets.connect`` raises, the Relay exits, and the process
+supervisor restarts it. That is the documented MVP shutdown model (clean log +
+exit 1 in main.py). If unsupervised deployment is ever needed, wrap the
+connection in a reconnect-with-backoff loop here.
 """
 
 import json

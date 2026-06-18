@@ -10,9 +10,10 @@ Framing contract (per PI docs/rpc.md):
   * read(n): return up to n bytes; return b"" to signal EOF (peer closed).
 """
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
+@runtime_checkable
 class StreamTransport(Protocol):
     """A bidirectional byte stream with LF-delimited framing."""
 
