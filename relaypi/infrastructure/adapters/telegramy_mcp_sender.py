@@ -78,10 +78,10 @@ class TelegramyMCPSender(MessageSender):
         # _session_id set would wedge the sender: every later call would skip the
         # handshake while the server never received the notification.
         session_id = resp.headers.get("mcp-session-id")
-        # The server waits for this notification before processing requests; a
-        # 202 Accepted is the success path. Raise on anything else so the
-        # session id is NOT committed (see comment above) and the next call
-        # retries the whole handshake.
+        # The notification MUST include the session id from initialize (the
+        # server needs it to associate this notification with the session). We
+        # pass it explicitly rather than committing to self._session_id yet,
+        # so a failed notification still retries the full handshake next time.
         notify_resp = await self._client.post(
             self._url,
             json={
@@ -89,7 +89,7 @@ class TelegramyMCPSender(MessageSender):
                 "method": "notifications/initialized",
                 "params": {},
             },
-            headers=self._headers(),
+            headers=self._headers(session_id=session_id),
         )
         notify_resp.raise_for_status()
         self._session_id = session_id
@@ -112,14 +112,17 @@ class TelegramyMCPSender(MessageSender):
             raise RuntimeError(f"telegramy MCP error: {data['error']}")
         return data.get("result", {})
 
-    def _headers(self, init: bool = False) -> dict:
+    def _headers(self, init: bool = False, session_id: str | None = None) -> dict:
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json, text/event-stream",
         }
-        # The session id is returned by initialize and must be replayed thereafter.
-        if self._session_id is not None and not init:
-            headers["mcp-session-id"] = self._session_id
+        # Use explicit session_id if provided (during handshake when
+        # self._session_id hasn't been committed yet); otherwise replay the
+        # stored one. Never include on initialize itself.
+        sid = session_id or self._session_id
+        if sid is not None and not init:
+            headers["mcp-session-id"] = sid
         return headers
 
     @staticmethod
