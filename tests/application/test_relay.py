@@ -31,7 +31,7 @@ async def test_relay_formats_with_username_and_delivers_reply():
     await relay.drain()
 
     # Assert — the prompt was formatted with the username; the reply was sent.
-    assert pi.commands == [{"type": "prompt", "message": "[from=alice] analyze BTC"}]
+    assert pi.commands == [{"type": "prompt", "message": "[from=alice][chat=123] analyze BTC"}]
     assert sender.sent == [{"chat_id": "123", "text": "BTC looks bullish"}]
 
 

@@ -108,12 +108,12 @@ def test_parse_strips_surrounding_whitespace_from_text():
 
 def test_format_uses_username_when_present():
     msg = parse_inbound(_msg_event(username="alice", text="hi"))
-    assert format_prompt(msg).text == "[from=alice] hi"
+    assert format_prompt(msg).text == "[from=alice][chat=1] hi"
 
 
 def test_format_falls_back_to_first_name_when_no_username():
     msg = parse_inbound(_msg_event(username=None, first_name="Alice", text="hi"))
-    assert format_prompt(msg).text == "[from=Alice] hi"
+    assert format_prompt(msg).text == "[from=Alice][chat=1] hi"
 
 
 def test_format_uses_anonymous_when_no_username_or_first_name():
@@ -126,9 +126,9 @@ def test_format_uses_anonymous_when_no_username_or_first_name():
         },
     }
     msg = parse_inbound(event)
-    assert format_prompt(msg).text == "[from=anonymous] hi"
+    assert format_prompt(msg).text == "[from=anonymous][chat=1] hi"
 
 
-def test_chat_id_never_enters_formatted_prompt():
-    msg = parse_inbound(_msg_event(chat_id="999", text="hi"))
-    assert "999" not in format_prompt(msg).text
+def test_chat_id_is_included_for_media_tools():
+    msg = parse_inbound(_msg_event(chat_id="566302374", text="hi"))
+    assert "[chat=566302374]" in format_prompt(msg).text
