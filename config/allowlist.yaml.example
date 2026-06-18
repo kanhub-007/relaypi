@@ -1,0 +1,19 @@
+# HAL Relay allowlist — who can talk to HAL.
+#
+# Static: edit this file and restart the relay to change it.
+# See docs/configuration.md for the full reference.
+
+# Telegram user IDs allowed to DM HAL. To find yours, message @userinfobot.
+dm_users:
+  - 987654321  # replace with your Telegram user id
+
+# Group chats HAL may operate in. A group's id is negative.
+groups:
+  - id: -100111000        # example: an open group — any member may use HAL
+    mode: open
+
+  - id: -100222000        # example: a restricted group — only listed members
+    mode: restricted
+    members:
+      - 987654321
+      - 111222333
