@@ -15,6 +15,7 @@ import json
 import httpx
 import pytest
 
+from relaypi.core.domain.entities.outbound_reply import OutboundReply
 from relaypi.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
 
 MCP_URL = "http://telegramy.test/mcp"
@@ -67,7 +68,7 @@ async def test_send_message_runs_full_mcp_handshake_then_tools_call():
     captured: dict = {"requests": [], "headers": []}
     sender = _make_sender(captured)
     try:
-        await sender.send_message("123", "hello")
+        await sender.send_message(OutboundReply(chat_id="123", text="hello"))
     finally:
         await sender.close()
 
@@ -85,9 +86,9 @@ async def test_handshake_runs_only_once_across_multiple_sends():
     captured: dict = {"requests": [], "headers": []}
     sender = _make_sender(captured)
     try:
-        await sender.send_message("1", "a")
-        await sender.send_message("2", "b")
-        await sender.send_message("3", "c")
+        await sender.send_message(OutboundReply(chat_id="1", text="a"))
+        await sender.send_message(OutboundReply(chat_id="2", text="b"))
+        await sender.send_message(OutboundReply(chat_id="3", text="c"))
     finally:
         await sender.close()
 
@@ -122,7 +123,7 @@ async def test_mcp_error_raises():
     sender = TelegramyMCPSender(MCP_URL, transport=httpx.MockTransport(handler))
     try:
         with pytest.raises(RuntimeError, match="telegramy MCP error"):
-            await sender.send_message("123", "hi")
+            await sender.send_message(OutboundReply(chat_id="123", text="hi"))
     finally:
         await sender.close()
 
@@ -161,12 +162,12 @@ async def test_partial_handshake_failure_retries_full_handshake_on_next_call():
     try:
         # First send fails during the notification step.
         with pytest.raises(httpx.HTTPStatusError):
-            await sender.send_message("123", "first")
+            await sender.send_message(OutboundReply(chat_id="123", text="first"))
         # Sender did NOT commit the session id.
         assert sender._session_id is None  # type: ignore[attr-defined]
 
         # Second send retries the FULL handshake and succeeds.
-        await sender.send_message("123", "second")
+        await sender.send_message(OutboundReply(chat_id="123", text="second"))
         assert attempts["init_count"] == 2  # initialize ran twice
     finally:
         await sender.close()

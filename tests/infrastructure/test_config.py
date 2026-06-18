@@ -6,6 +6,7 @@ covered in test_allowlist.py. Config itself must not touch the filesystem.
 
 import os
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -28,7 +29,9 @@ def test_defaults_when_no_env_vars_set(clean_env):
     assert cfg.telegramy_mcp_url == "http://localhost:8005/mcp"
     assert cfg.project_dir == "hal"
     assert cfg.session_dir == "hal/sessions"
-    assert cfg.allowlist_path == "config/allowlist.yaml"
+    # Default is now resolved relative to config.py, so it's an absolute path.
+    assert Path(cfg.allowlist_path).name == "allowlist.yaml"
+    assert Path(cfg.allowlist_path).parent.name == "config"
     # pi_bin = RELAYPI_PI_BIN or shutil.which("pi") or "pi". We don't assume whether
     # pi happens to be installed on the test host; just assert the contract.
     assert cfg.pi_bin == (shutil.which("pi") or "pi")

@@ -7,6 +7,7 @@ Relay must never crash and never leave the user in silence when PI fails.
 
 from relaypi.core.application.relay import Relay
 from relaypi.core.domain.agent_error import AgentError
+from relaypi.core.domain.entities.outbound_reply import OutboundReply
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_agent_client import FakeAgentClient
@@ -46,7 +47,7 @@ async def test_pi_failure_yields_error_reply_not_crash():
 
 async def test_total_sender_outage_does_not_kill_relay():
     class DeadSender(FakeMessageSender):
-        async def send_message(self, chat_id: str, text: str) -> None:
+        async def send_message(self, reply: OutboundReply) -> None:
             raise RuntimeError("telegramy unreachable")
 
     pi = FakeAgentClient(reply="hi")

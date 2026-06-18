@@ -18,13 +18,27 @@ class StreamTransport(Protocol):
     """A bidirectional byte stream with LF-delimited framing."""
 
     async def write(self, data: bytes) -> None:
-        """Send bytes to the peer (PI's stdin)."""
+        """Send bytes to the peer (PI's stdin).
+
+        The caller is responsible for LF-delimited framing;
+        this method is a raw byte write.
+        """
         ...
 
     async def read(self, n: int) -> bytes:
-        """Read up to n bytes; return b"" at EOF."""
+        """Read up to n bytes from the peer (PI's stdout).
+
+        Returns b"" to signal EOF (peer closed / process exited).
+        The caller is responsible for buffering and splitting
+        on LF to recover JSONL lines.
+        """
         ...
 
     async def close(self) -> None:
-        """Close the stream and signal EOF to a pending read."""
+        """Close the stream.
+
+        Implementations should signal EOF to the peer (e.g. close
+        stdin), wait for graceful exit, then escalate to kill on
+        timeout. Must not hang indefinitely.
+        """
         ...

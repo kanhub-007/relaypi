@@ -32,7 +32,7 @@ async def _spawn_echo(
         argv=_echo_argv(), shutdown_timeout=shutdown_timeout
     )
     await transport.start()
-    assert transport._proc is not None  # type: ignore[attr-defined] - inspect for test
+    assert transport._proc is not None  # type: ignore[attr-defined]
     return transport, transport._proc  # type: ignore[return-value]
 
 
@@ -42,7 +42,9 @@ async def test_round_trips_jsonl_through_a_real_subprocess():
     try:
         await client.start()
         # echo_pi answers any command with success + same id.
-        resp = await client._send_command({"type": "get_last_assistant_text"})
+        resp = await client._proto.send_command(  # type: ignore[attr-defined]
+            {"type": "get_last_assistant_text"}
+        )
         assert resp["success"] is True
         assert resp["id"] == 1
     finally:

@@ -17,9 +17,11 @@ connection in a reconnect-with-backoff loop here.
 
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 import websockets
+
+from relaypi.core.domain.interfaces.message_source import MessageSource
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +30,13 @@ logger = logging.getLogger(__name__)
 _SUBSCRIBED_EVENTS = ["message"]
 
 
-class WebSocketMessageSource:
+class WebSocketMessageSource(MessageSource):
     """A MessageSource backed by a telegramy WebSocket subscription."""
 
     def __init__(self, url: str) -> None:
         self._url = url
 
-    async def events(self) -> AsyncIterator[dict]:
+    async def events(self) -> AsyncGenerator[dict, None]:
         """Connect, subscribe, and yield decoded event dicts until disconnect."""
         async with websockets.connect(self._url) as ws:
             await ws.send(

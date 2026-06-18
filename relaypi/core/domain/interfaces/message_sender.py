@@ -2,12 +2,14 @@
 
 from abc import ABC, abstractmethod
 
+from relaypi.core.domain.entities.outbound_reply import OutboundReply
+
 
 class MessageSender(ABC):
     """Sends messages back to the user via telegramy's send tools."""
 
     @abstractmethod
-    async def send_message(self, chat_id: str, text: str) -> None:
+    async def send_message(self, reply: OutboundReply) -> None:
         """Send a text message to a chat."""
         ...
 

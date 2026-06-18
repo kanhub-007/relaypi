@@ -18,6 +18,7 @@ import pytest
 from websockets.asyncio.server import serve
 
 from relaypi.core.application.relay import Relay
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 from relaypi.infrastructure.adapters.websocket_message_source import (
     WebSocketMessageSource,
 )
@@ -70,7 +71,7 @@ async def test_websocket_source_subscribes_and_yields_events(clean_env, monkeypa
     # Tiny allow-all Relay so we can observe the event reaching the router.
     seen: list[str] = []
 
-    class CaptureRouter:
+    class CaptureRouter(SessionRouter):
         async def get_or_create(self, chat_id: str):
             seen.append(chat_id)
             return FakeAgentClient(reply="ok")
@@ -80,7 +81,7 @@ async def test_websocket_source_subscribes_and_yields_events(clean_env, monkeypa
 
     relay = Relay(
         source=WebSocketMessageSource(f"ws://127.0.0.1:{port}"),
-        router=CaptureRouter(),  # type: ignore[arg-type]
+        router=CaptureRouter(),
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
     )

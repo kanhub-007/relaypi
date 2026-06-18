@@ -1,13 +1,13 @@
 """MessageSource port — filtered inbound event stream (contract 1)."""
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 
 class MessageSource(ABC):
     """A stream of raw telegramy WebSocket events, already filtered server-side."""
 
     @abstractmethod
-    def events(self) -> AsyncIterator[dict]:
+    async def events(self) -> AsyncGenerator[dict, None]:
         """Yield raw event dicts. Implementations are async generators."""
         ...

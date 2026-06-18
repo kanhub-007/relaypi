@@ -10,25 +10,14 @@ Observable outcomes: the number of simultaneously in-flight prompts
 
 import asyncio
 
-import pytest
-
 from relaypi.core.application.relay import Relay
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.blocking_agent_client import BlockingAgentClient
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_message_sender import FakeMessageSender
 from tests.fakes.fake_message_source import FakeMessageSource
-
-
-async def _wait_until(predicate, timeout: float = 1.0) -> None:
-    """Poll ``predicate`` until it is truthy, failing after ``timeout`` seconds."""
-    elapsed = 0.0
-    step = 0.005
-    while not predicate():
-        if elapsed >= timeout:
-            pytest.fail(f"condition not met within {timeout}s")
-        await asyncio.sleep(step)
-        elapsed += step
+from tests.fakes.wait_helpers import wait_until
 
 
 async def test_same_chat_messages_are_serialized_in_order():
@@ -48,7 +37,7 @@ async def test_same_chat_messages_are_serialized_in_order():
     drain_task = asyncio.create_task(relay.drain())
 
     # The first prompt is in flight; the second has NOT started (lock held).
-    await _wait_until(lambda: len(pi.pending) >= 1)
+    await wait_until(lambda: len(pi.pending) >= 1)
     assert len(pi.pending) == 1
     assert pi.commands[0]["message"] == "[from=koena] first"
 
@@ -58,7 +47,7 @@ async def test_same_chat_messages_are_serialized_in_order():
 
     # Release the first -> the second starts.
     pi.pending[0].set_result(None)
-    await _wait_until(lambda: len(pi.pending) >= 2)
+    await wait_until(lambda: len(pi.pending) >= 2)
     assert pi.commands[1]["message"] == "[from=koena] second"
 
     pi.pending[1].set_result(None)
@@ -74,7 +63,7 @@ async def test_different_chats_run_concurrently():
     # A router that hands out a distinct BlockingAgentClient per chat.
     clients: dict[str, BlockingAgentClient] = {}
 
-    class PerChatRouter:
+    class PerChatRouter(SessionRouter):
         async def get_or_create(self, chat_id: str):
             if chat_id not in clients:
                 clients[chat_id] = BlockingAgentClient()
@@ -90,7 +79,7 @@ async def test_different_chats_run_concurrently():
                 msg_event("456", "alice", "hi"),
             ]
         ),
-        router=PerChatRouter(),  # type: ignore[arg-type]
+        router=PerChatRouter(),
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
     )
@@ -98,7 +87,7 @@ async def test_different_chats_run_concurrently():
     drain_task = asyncio.create_task(relay.drain())
 
     # Both chats should be in flight simultaneously (read loop not blocked).
-    await _wait_until(
+    await wait_until(
         lambda: len(clients) == 2 and all(len(c.pending) >= 1 for c in clients.values())
     )
 
@@ -112,7 +101,7 @@ async def test_different_chats_run_concurrently():
 
 
 def _single_client_router(client):
-    class _Router:
+    class _Router(SessionRouter):
         async def get_or_create(self, chat_id: str):
             return client
 

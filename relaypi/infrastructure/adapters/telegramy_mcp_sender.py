@@ -14,6 +14,7 @@ import logging
 
 import httpx
 
+from relaypi.core.domain.entities.outbound_reply import OutboundReply
 from relaypi.core.domain.interfaces.message_sender import MessageSender
 
 logger = logging.getLogger(__name__)
@@ -37,14 +38,17 @@ class TelegramyMCPSender(MessageSender):
         self._session_id: str | None = None
         self._req_id = 0
 
-    async def send_message(self, chat_id: str, text: str) -> None:
+    async def send_message(self, reply: OutboundReply) -> None:
         """Send a text message to a Telegram chat via telegramy's MCP server."""
         await self._ensure_initialized()
         result = await self._call(
             "tools/call",
-            {"name": "send_message", "arguments": {"chat_id": chat_id, "text": text}},
+            {
+                "name": "send_message",
+                "arguments": {"chat_id": reply.chat_id, "text": reply.text},
+            },
         )
-        logger.debug("send_message result for %s: %s", chat_id, result)
+        logger.debug("send_message result for %s: %s", reply.chat_id, result)
 
     async def close(self) -> None:
         """Release the HTTP connection pool."""
@@ -120,7 +124,14 @@ class TelegramyMCPSender(MessageSender):
 
     @staticmethod
     def _parse(text: str) -> dict:
-        """FastMCP streamable-http returns SSE; plain JSON is also accepted."""
+        """FastMCP streamable-http returns SSE; plain JSON is also accepted.
+
+        Assumes a single ``data:`` event per response — the MCP ``tools/call``
+        returns one result event. If the server ever emits multiple SSE events
+        in a single HTTP response (e.g. progress + result), this method would
+        need to collect all and return the last, or the caller would need to
+        iterate.
+        """
         if text.startswith("{"):
             return json.loads(text)
         for line in text.split("\n"):

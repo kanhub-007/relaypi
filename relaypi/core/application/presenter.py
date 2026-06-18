@@ -7,6 +7,10 @@ accrete presentation logic as more message kinds are added (error replies,
 busy notices, too-long notices, ...).
 """
 
-# Sent to the user when a turn fails operationally (PI down, rejected, timed
-# out) or when an unexpected error occurs while handling their message.
-ERROR_REPLY_TEXT = "⚠️ Something went wrong processing that. Try again."
+
+class Presenter:
+    """User-facing reply text for the relay's outbound messages."""
+
+    # Sent to the user when a turn fails operationally (PI down, rejected,
+    # timed out) or when an unexpected error occurs while handling their message.
+    ERROR_REPLY_TEXT = "⚠️ Something went wrong processing that. Try again."

@@ -6,6 +6,7 @@ outcomes (what was prompted, what was sent). No interaction assertions.
 
 from relaypi.core.application.relay import Relay
 from relaypi.core.domain.entities.group_config import GroupConfig
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 from relaypi.infrastructure.allowlist_config import ConfigAllowlist
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
@@ -114,7 +115,7 @@ async def test_relay_routes_distinct_chats_to_distinct_sessions():
     # Scenario 3 (Relay integration): two chats -> two router lookups, one each.
     seen_chats: list[str] = []
 
-    class RecordingRouter:
+    class RecordingRouter(SessionRouter):
         async def get_or_create(self, chat_id: str):
             seen_chats.append(chat_id)
             return FakeAgentClient(reply=f"reply-{chat_id}")
@@ -129,7 +130,7 @@ async def test_relay_routes_distinct_chats_to_distinct_sessions():
                 msg_event("456", "alice", "hi"),
             ]
         ),
-        router=RecordingRouter(),  # type: ignore[arg-type]
+        router=RecordingRouter(),
         sender=FakeMessageSender(),
         allowlist=AllowAllList(),
     )

@@ -130,10 +130,6 @@ def test_allowlist_loaded_from_yaml_config():
 
 
 def test_load_allowlist_from_path_reads_yaml_file(tmp_path):
-    from tests.fakes.event_helpers import msg_event
-
-    from relaypi.core.application.parse import parse_inbound
-
     f = tmp_path / "allowlist.yaml"
     f.write_text("dm_users: [123]\n" "groups:\n  - id: -100\n    mode: open\n")
     allowlist = load_allowlist_from_path(str(f))
@@ -147,10 +143,6 @@ def test_load_allowlist_from_path_reads_yaml_file(tmp_path):
 
 def test_load_allowlist_from_path_fails_closed_when_missing(tmp_path):
     # Missing file -> empty allowlist (everything dropped), no raise.
-    from tests.fakes.event_helpers import msg_event
-
-    from relaypi.core.application.parse import parse_inbound
-
     allowlist = load_allowlist_from_path(str(tmp_path / "absent.yaml"))
     assert (
         allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123))) is False
@@ -159,10 +151,6 @@ def test_load_allowlist_from_path_fails_closed_when_missing(tmp_path):
 
 def test_load_allowlist_from_path_fails_closed_when_unreadable(tmp_path):
     # A directory (or any OSError) -> empty allowlist, no raise.
-    from tests.fakes.event_helpers import msg_event
-
-    from relaypi.core.application.parse import parse_inbound
-
     allowlist = load_allowlist_from_path(str(tmp_path))  # tmp_path is a directory
     assert (
         allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123))) is False

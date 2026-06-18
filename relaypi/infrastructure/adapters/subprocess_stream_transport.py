@@ -19,10 +19,12 @@ import asyncio
 import logging
 from asyncio import subprocess
 
+from relaypi.infrastructure.adapters.stream_transport import StreamTransport
+
 logger = logging.getLogger(__name__)
 
 
-class SubprocessStreamTransport:
+class SubprocessStreamTransport(StreamTransport):
     """A StreamTransport backed by a child process's stdin/stdout pipes."""
 
     def __init__(
@@ -54,13 +56,15 @@ class SubprocessStreamTransport:
 
     async def write(self, data: bytes) -> None:
         """Write bytes to the process's stdin."""
-        assert self._proc is not None and self._proc.stdin is not None
+        if self._proc is None or self._proc.stdin is None:
+            raise RuntimeError("SubprocessStreamTransport not started")
         self._proc.stdin.write(data)
         await self._proc.stdin.drain()
 
     async def read(self, n: int) -> bytes:
         """Read up to n bytes from stdout; b"" at EOF (process exited/closed)."""
-        assert self._proc is not None and self._proc.stdout is not None
+        if self._proc is None or self._proc.stdout is None:
+            raise RuntimeError("SubprocessStreamTransport not started")
         return await self._proc.stdout.read(n)
 
     async def close(self) -> None:

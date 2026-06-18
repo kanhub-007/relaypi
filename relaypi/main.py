@@ -2,6 +2,12 @@
 
 Run with:  python -m relaypi.main
 
+This module lives at the package root (not presentation/) by design — the
+implementation guide (specs/.../04-implementation.md Step 8) puts it here as
+the thinnest possible entry point. It has startup/-layer import permissions:
+it can import from infrastructure for connection-error classification and
+call the composition root.
+
 Windows note: loop.add_signal_handler is unsupported, so shutdown is driven by
 KeyboardInterrupt (Ctrl+C / console close). On POSIX you could add SIGTERM/SIGINT
 handlers; the try/finally here keeps the same code running on both.
@@ -11,47 +17,25 @@ import asyncio
 import logging
 import sys
 
+import httpx
+import websockets.exceptions
+
 from relaypi.startup.factory import create_relay
 
 logger = logging.getLogger(__name__)
 
-
 # Connection-classification: match by exception CLASS (isinstance), not by
 # type-name string. Name-based matching breaks silently if a library renames an
 # exception (websockets has across majors) or if httpx raises a class we didn't
-# enumerate. Imports are guarded so the module loads even if a library version
-# lacks one of them.
+# enumerate.
 _CONNECTION_ERRORS: tuple[type[BaseException], ...] = (
     OSError,  # ConnectionRefusedError, ConnectionResetError, etc.
+    websockets.exceptions.InvalidHandshake,
+    websockets.exceptions.InvalidStatus,
+    websockets.exceptions.InvalidURI,
+    httpx.ConnectError,
+    httpx.RemoteProtocolError,
 )
-try:  # websockets is a hard dep, but guard against rename/removal of exceptions
-    from websockets.exceptions import InvalidHandshake as _WS_InvalidHandshake
-
-    _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidHandshake)
-    try:
-        from websockets.exceptions import InvalidStatus as _WS_InvalidStatus
-
-        _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidStatus)
-    except ImportError:
-        pass
-    try:
-        from websockets.exceptions import InvalidURI as _WS_InvalidURI
-
-        _CONNECTION_ERRORS = (*_CONNECTION_ERRORS, _WS_InvalidURI)
-    except ImportError:
-        pass
-except ImportError:
-    pass
-try:  # httpx connect errors (telegramy MCP down)
-    import httpx as _httpx
-
-    _CONNECTION_ERRORS = (
-        *_CONNECTION_ERRORS,
-        _httpx.ConnectError,
-        _httpx.RemoteProtocolError,
-    )
-except ImportError:
-    pass
 
 
 def _is_connection_error(exc: BaseException) -> bool:

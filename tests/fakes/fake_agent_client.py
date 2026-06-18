@@ -5,8 +5,10 @@ can assert on what was sent (outcome of the routing decision), without
 interaction assertions on a mock.
 """
 
+from relaypi.core.domain.interfaces.agent_client import AgentClient
 
-class FakeAgentClient:
+
+class FakeAgentClient(AgentClient):
     def __init__(self, reply: str = "[ok]", alive: bool = True) -> None:
         self.commands: list[dict] = []  # outgoing: prompt / abort / ui_response
         self._reply = reply

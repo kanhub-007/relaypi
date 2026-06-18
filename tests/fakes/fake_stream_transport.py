@@ -12,8 +12,10 @@ get_last_assistant_text flow).
 import asyncio
 import json
 
+from relaypi.infrastructure.adapters.stream_transport import StreamTransport
 
-class FakeStreamTransport:
+
+class FakeStreamTransport(StreamTransport):
     def __init__(self) -> None:
         self.writes: list[dict] = []
         self._out: asyncio.Queue[bytes] = asyncio.Queue()
@@ -21,14 +23,19 @@ class FakeStreamTransport:
         self._eof_after: set[int] = set()
 
     def script_response(self, cmd_id: int, lines: list[dict]) -> None:
-        """Queue these JSON lines for read() once command ``cmd_id`` is written."""
+        """Queue JSON lines for read() once command ``cmd_id`` is written.
+
+        The response is demand-driven: lines only appear on the read stream
+        after the matching command id is sent via write(). This prevents
+        races in multi-command flows like prompt → get_last_assistant_text.
+        """
         self._script[cmd_id] = list(lines)
 
     def script_eof_after(self, cmd_id: int) -> None:
-        """After command ``cmd_id``'s response lines are queued, deliver EOF (b"").
+        """After ``cmd_id``'s response lines are queued, deliver EOF (b"").
 
-        Simulates a PI subprocess crash mid-turn: the prompt was accepted and
-        its response sent, then stdout closed before the turn finished.
+        Simulates a PI subprocess crash mid-turn: the prompt was acked, its
+        response sent, then stdout closed before the turn finished.
         """
         self._eof_after.add(cmd_id)
 

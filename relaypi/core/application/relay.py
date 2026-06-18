@@ -12,9 +12,10 @@ import logging
 
 from relaypi.core.application.format_prompt import format_prompt
 from relaypi.core.application.parse import parse_inbound
-from relaypi.core.application.presenter import ERROR_REPLY_TEXT
+from relaypi.core.application.presenter import Presenter
 from relaypi.core.domain.agent_error import AgentError
 from relaypi.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.outbound_reply import OutboundReply
 from relaypi.core.domain.interfaces.allowlist import Allowlist
 from relaypi.core.domain.interfaces.message_sender import MessageSender
 from relaypi.core.domain.interfaces.message_source import MessageSource
@@ -57,7 +58,7 @@ class Relay:
         if self._started:
             raise RuntimeError("Relay already started")
         self._started = True
-        it = self._source.events().__aiter__()
+        it = self._source.events()
         try:
             while not self._stopping:
                 try:
@@ -89,7 +90,9 @@ class Relay:
                 client = await self._router.get_or_create(msg.chat_id)
                 prompt = format_prompt(msg)
                 text = await client.prompt_and_collect(prompt.text)
-                await self._sender.send_message(msg.chat_id, text)
+                await self._sender.send_message(
+                    OutboundReply(chat_id=msg.chat_id, text=text)
+                )
             except AgentError as exc:
                 # Expected operational failure (PI down/rejected/timed out).
                 # Log at WARNING (operational, not a bug) and tell the user.
@@ -107,7 +110,9 @@ class Relay:
     async def _safe_send_error(self, chat_id: str) -> None:
         """Best-effort error reply; never escalates if the sender is also down."""
         try:
-            await self._sender.send_message(chat_id, ERROR_REPLY_TEXT)
+            await self._sender.send_message(
+                OutboundReply(chat_id=chat_id, text=Presenter.ERROR_REPLY_TEXT)
+            )
         except Exception:
             logger.exception("also failed to send error reply")
 

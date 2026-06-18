@@ -7,8 +7,10 @@ entries in ``pending`` is the observable "how many prompts are in flight".
 
 import asyncio
 
+from relaypi.core.domain.interfaces.agent_client import AgentClient
 
-class BlockingAgentClient:
+
+class BlockingAgentClient(AgentClient):
     def __init__(self) -> None:
         self.commands: list[dict] = []
         self.pending: list[asyncio.Future[None]] = []

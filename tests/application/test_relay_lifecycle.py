@@ -4,8 +4,6 @@ Black-box: assert on observable outcomes (what was dispatched, whether run
 re-enters). No interaction assertions.
 """
 
-import asyncio
-
 import pytest
 
 from relaypi.core.application.relay import Relay
@@ -68,12 +66,3 @@ async def test_stop_is_safe_before_run_starts():
     await relay.stop()  # no raise, no dispatch
     # And run still works afterwards (stop didn't flip _started).
     await relay.drain()
-
-
-async def _wait_until(predicate, timeout: float = 1.0) -> None:
-    elapsed = 0.0
-    while not predicate():
-        if elapsed >= timeout:
-            pytest.fail("condition not met within timeout")
-        await asyncio.sleep(0.005)
-        elapsed += 0.005

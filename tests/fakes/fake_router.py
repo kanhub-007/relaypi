@@ -5,9 +5,10 @@ define an inline fake router (see test_distinct_chats_get_distinct_sessions).
 """
 
 from relaypi.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 
 
-class FakeRouter:
+class FakeRouter(SessionRouter):
     def __init__(self, client: AgentClient) -> None:
         self._client = client
 
