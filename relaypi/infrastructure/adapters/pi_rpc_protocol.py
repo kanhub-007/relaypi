@@ -159,6 +159,9 @@ class PiRpcProtocol:
         elif t == "extension_ui_request":
             await self._handle_ui_request(msg)  # MUST answer or PI blocks forever
         else:
+            # Log at DEBUG so you can follow what PI is doing (tool calls,
+            # agent steps, compaction, etc.) without INFO-level noise.
+            logger.debug("pi event: %s", _event_summary(msg))
             if self._event_queue is not None:
                 self._event_queue.put_nowait(msg)
 
@@ -181,3 +184,44 @@ class PiRpcProtocol:
             if not fut.done():
                 fut.set_exception(exc)
         self._pending.clear()
+
+
+def _event_summary(msg: dict) -> str:
+    """Short human-readable summary of a PI RPC event for debug logging."""
+    t = msg.get("type", "?")
+    if t == "agent_start":
+        return "agent_start"
+    if t == "agent_end":
+        return "agent_end"
+    if t == "message_update":
+        delta = msg.get("text_delta", "")
+        return f"message_update ({len(delta)} chars)"
+    if t == "tool_call":
+        name = msg.get("tool_name", "?")
+        args = msg.get("arguments", {})
+        return f"tool_call: {name}({_brief_args(args)})"
+    if t == "tool_execution_start":
+        return f"tool_execution_start: {msg.get('toolCallId', '?')[:12]}"
+    if t == "tool_execution_update":
+        delta = msg.get("output_delta", "")
+        return f"tool_execution_update ({len(delta)} chars)"
+    if t == "tool_execution_end":
+        return "tool_execution_end"
+    if t == "compaction_start":
+        return "compaction_start"
+    if t == "compaction_end":
+        return "compaction_end"
+    return t
+
+
+def _brief_args(args: dict) -> str:
+    """Brief representation of tool arguments for logging."""
+    if not args:
+        return ""
+    parts = []
+    for k, v in args.items():
+        s = str(v)
+        if len(s) > 40:
+            s = s[:37] + "..."
+        parts.append(f"{k}={s}")
+    return ", ".join(parts)

@@ -26,6 +26,9 @@ echo.
 echo Starting relaypi (Ctrl+C to stop)...
 echo.
 
+REM Uncomment to see PI events in real-time (tool calls, agent steps, etc.):
+REM set RELAYPI_LOG_LEVEL=DEBUG
+
 python -m relaypi.main
 
 if %ERRORLEVEL% NEQ 0 (

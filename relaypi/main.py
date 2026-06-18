@@ -15,6 +15,7 @@ handlers; the try/finally here keeps the same code running on both.
 
 import asyncio
 import logging
+import os
 import sys
 
 import httpx
@@ -69,8 +70,9 @@ async def main() -> int:
 
 
 if __name__ == "__main__":
+    log_level = os.environ.get("RELAYPI_LOG_LEVEL", "INFO").upper()
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
     try:
