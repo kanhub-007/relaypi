@@ -10,3 +10,5 @@ sessions/
 hal/sessions/
 .env
 config/allowlist.yaml
+specs/
+research/

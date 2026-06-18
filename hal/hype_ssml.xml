@@ -1,0 +1,79 @@
+<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
+    <voice name="en-US-GuyNeural">
+        <prosody rate="medium" pitch="+5%">
+            HYPE token. <break time="400ms"/> Let's <emphasis level="strong">talk</emphasis> about it.
+        </prosody>
+
+        <break time="600ms"/>
+
+        <prosody rate="fast" pitch="+10%">
+            This thing is up <emphasis level="strong">two hundred and eighteen percent</emphasis> in six months. <break time="300ms"/> Two. One. Eight. Percent. <break time="400ms"/> Are you kidding me?!
+        </prosody>
+
+        <break time="500ms"/>
+
+        <prosody rate="medium">
+            May alone? <break time="200ms"/> Up <emphasis level="strong">eighty-two percent</emphasis>. <break time="300ms"/> From forty dollars to seventy-two. <break time="400ms"/> Absolute. Monster.
+        </prosody>
+
+        <break time="700ms"/>
+
+        <prosody rate="slow" pitch="-3%">
+            Here is the deal. <break time="300ms"/> Right now HYPE is consolidating around seventy-one dollars. <break time="200ms"/> It hit an all-time high of seventy-seven dollars on June sixteenth. <break time="300ms"/> Then it pulled back.
+        </prosody>
+
+        <break time="400ms"/>
+
+        <prosody rate="medium">
+            Normal. Healthy. <break time="400ms"/> This is what winners do <break time="200ms"/> before the next leg up.
+        </prosody>
+
+        <break time="700ms"/>
+
+        <prosody rate="medium" pitch="+5%">
+            Multi-timeframe check. <break time="300ms"/> Daily chart? <break time="200ms"/> <emphasis level="strong">Bullish.</emphasis> <break time="300ms"/> RSI at sixty-one. MACD positive. Price above <emphasis level="strong">every</emphasis> moving average. <break time="400ms"/> The trend is your friend <break time="200ms"/> and this trend is <emphasis level="strong">strong.</emphasis>
+        </prosody>
+
+        <break time="600ms"/>
+
+        <prosody rate="medium">
+            Hourly chart? <break time="200ms"/> Corrective. <break time="300ms"/> That is fine. That is <emphasis level="strong">expected.</emphasis> <break time="400ms"/> Price is building a base between seventy and seventy-three. <break time="300ms"/> This is coiling. <break time="200ms"/> This is spring-loading. <break time="400ms"/> When it breaks, <break time="200ms"/> it is going to <emphasis level="strong">rip.</emphasis>
+        </prosody>
+
+        <break time="700ms"/>
+
+        <prosody rate="medium" pitch="+8%">
+            Key levels. <break time="300ms"/> Support at sixty-eight to seventy. <break time="200ms"/> That is your buy zone. <break time="200ms"/> That is where you want to be. <break time="400ms"/> Resistance at seventy-four. <break time="200ms"/> Break above that and we are retesting seventy-seven. <break time="300ms"/> Break seventy-seven <break time="200ms"/> and we are looking at <emphasis level="strong">eighty.</emphasis> <break time="200ms"/> Then <emphasis level="strong">eighty-five.</emphasis>
+        </prosody>
+
+        <break time="700ms"/>
+
+        <prosody rate="medium">
+            The volume story is <emphasis level="strong">beautiful.</emphasis> <break time="300ms"/> Volume spiked on the rally. Peak day was thirty-two million. <break time="300ms"/> Now volume is drying up <break time="200ms"/> as price coils. <break time="400ms"/> Low volume consolidation after high volume expansion? <break time="200ms"/> That is <emphasis level="strong">textbook</emphasis> continuation.
+        </prosody>
+
+        <break time="800ms"/>
+
+        <prosody rate="slow" pitch="-5%">
+            Bottom line. <break time="400ms"/> Sixty percent probability this resolves <emphasis level="strong">up.</emphasis> <break time="300ms"/> The higher timeframe trend is intact. <break time="200ms"/> The correction is orderly. <break time="200ms"/> No panic selling. <break time="400ms"/> This is accumulation. <break time="200ms"/> <emphasis level="strong">Not</emphasis> distribution.
+        </prosody>
+
+        <break time="800ms"/>
+
+        <prosody rate="fast" pitch="+12%">
+            My advice? <break time="300ms"/> Watch sixty-eight to seventy. <break time="200ms"/> That is the zone. <break time="300ms"/> If it holds, <break time="200ms"/> you <emphasis level="strong">load up.</emphasis> <break time="400ms"/> If it breaks seventy-four with volume, <break time="200ms"/> you <emphasis level="strong">add.</emphasis>
+        </prosody>
+
+        <break time="600ms"/>
+
+        <prosody rate="medium" pitch="-3%">
+            This is not financial advice. <break time="500ms"/> But this chart is <emphasis level="strong">speaking.</emphasis> <break time="600ms"/> Are you listening?
+        </prosody>
+
+        <break time="800ms"/>
+
+        <prosody rate="medium" pitch="+5%">
+            HAL <break time="100ms"/> out.
+        </prosody>
+    </voice>
+</speak>
