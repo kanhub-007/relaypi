@@ -8,6 +8,10 @@ build/
 dist/
 sessions/
 hal/sessions/
+hal/*.json
+hal/*.mp3
+hal/*.wav
+hal/*.xml
 .env
 config/allowlist.yaml
 specs/
