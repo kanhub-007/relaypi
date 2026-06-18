@@ -21,7 +21,7 @@ async def test_relay_formats_with_username_and_delivers_reply():
     pi = FakeAgentClient(reply="BTC looks bullish")
     sender = FakeMessageSender()
     relay = Relay(
-        source=FakeMessageSource([msg_event("123", "koena", "analyze BTC")]),
+        source=FakeMessageSource([msg_event("123", "alice", "analyze BTC")]),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=AllowAllList(),
@@ -31,7 +31,7 @@ async def test_relay_formats_with_username_and_delivers_reply():
     await relay.drain()
 
     # Assert — the prompt was formatted with the username; the reply was sent.
-    assert pi.commands == [{"type": "prompt", "message": "[from=koena] analyze BTC"}]
+    assert pi.commands == [{"type": "prompt", "message": "[from=alice] analyze BTC"}]
     assert sender.sent == [{"chat_id": "123", "text": "BTC looks bullish"}]
 
 
@@ -60,8 +60,8 @@ async def test_relay_drops_non_allowlisted_senders_and_keeps_allowlisted():
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("1", "stranger", "hi", user_id=999),  # not allowlisted
-                msg_event("2", "koena", "hi", user_id=987654321),  # allowlisted
+                msg_event("999", "stranger", "hi", user_id=999),  # not allowlisted
+                msg_event("987654321", "alice", "hi", user_id=987654321),  # allowlisted
             ]
         ),
         router=FakeRouter(pi),
@@ -73,8 +73,8 @@ async def test_relay_drops_non_allowlisted_senders_and_keeps_allowlisted():
 
     # Only the allowlisted user's message reached PI.
     assert len(pi.commands) == 1
-    assert "[from=koena]" in pi.commands[0]["message"]
-    assert sender.sent == [{"chat_id": "2", "text": "[ok]"}]
+    assert "[from=alice]" in pi.commands[0]["message"]
+    assert sender.sent == [{"chat_id": "987654321", "text": "[ok]"}]
 
 
 async def test_relay_applies_open_and_restricted_group_modes():
@@ -91,13 +91,13 @@ async def test_relay_applies_open_and_restricted_group_modes():
         source=FakeMessageSource(
             [
                 msg_event(
-                    -100111000, "anyone", "hi", chat_type="group", user_id=555
+                    "-100111000", "anyone", "hi", user_id=555
                 ),  # open
                 msg_event(
-                    -100222000, "alice", "hi", chat_type="group", user_id=111222333
+                    "-100222000", "alice", "hi", user_id=111222333
                 ),  # member
                 msg_event(
-                    -100222000, "stranger", "hi", chat_type="group", user_id=999
+                    "-100222000", "stranger", "hi", user_id=999
                 ),  # not member
             ]
         ),
@@ -126,7 +126,7 @@ async def test_relay_routes_distinct_chats_to_distinct_sessions():
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("123", "koena", "hello"),
+                msg_event("123", "alice", "hello"),
                 msg_event("456", "alice", "hi"),
             ]
         ),

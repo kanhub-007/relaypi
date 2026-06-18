@@ -20,7 +20,7 @@ async def test_run_rejects_double_start():
     # silently re-iterate the source (which would double-process events).
     pi = FakeAgentClient(reply="r")
     relay = Relay(
-        FakeMessageSource([msg_event("123", "koena", "hi")]),
+        FakeMessageSource([msg_event("123", "alice", "hi")]),
         FakeRouter(pi),
         FakeMessageSender(),
         AllowAllList(),
@@ -43,7 +43,7 @@ async def test_stop_prevents_dispatch_when_set_before_run_pulls():
     pi = FakeAgentClient(reply="r")
     relay = Relay(
         FakeMessageSource(
-            [msg_event("1", "koena", "hi"), msg_event("2", "koena", "hi")]
+            [msg_event("1", "alice", "hi"), msg_event("2", "alice", "hi")]
         ),
         FakeRouter(pi),
         FakeMessageSender(),

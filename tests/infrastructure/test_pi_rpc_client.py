@@ -55,7 +55,7 @@ async def test_prompt_collect_returns_final_assistant_text():
 
     client = await _start(transport)
     try:
-        text = await client.prompt_and_collect("[from=koena] analyze BTC")
+        text = await client.prompt_and_collect("[from=alice] analyze BTC")
     finally:
         await client.stop()
 
@@ -64,7 +64,7 @@ async def test_prompt_collect_returns_final_assistant_text():
     assert transport.writes[0] == {
         "id": 1,
         "type": "prompt",
-        "message": "[from=koena] analyze BTC",
+        "message": "[from=alice] analyze BTC",
     }
     assert transport.writes[1]["type"] == "get_last_assistant_text"
 
@@ -87,7 +87,7 @@ async def test_rejected_prompt_raises_does_not_hang():
     client = await _start(transport)
     try:
         with pytest.raises(RuntimeError, match="PI rejected prompt"):
-            await client.prompt_and_collect("[from=koena] oops")
+            await client.prompt_and_collect("[from=alice] oops")
     finally:
         await client.stop()
 
@@ -124,7 +124,7 @@ async def test_confirm_ui_request_is_auto_responded_and_turn_completes():
 
     client = await _start(transport)
     try:
-        text = await client.prompt_and_collect("[from=koena] do it")
+        text = await client.prompt_and_collect("[from=alice] do it")
     finally:
         await client.stop()
 
@@ -164,7 +164,7 @@ async def test_select_input_editor_requests_auto_responded_with_empty_value():
 
         client = await _start(transport)
         try:
-            await client.prompt_and_collect("[from=koena] x")
+            await client.prompt_and_collect("[from=alice] x")
         finally:
             await client.stop()
 
@@ -192,7 +192,7 @@ async def test_pi_dying_mid_turn_raises_and_does_not_hang():
 
         with pytest.raises(AgentError, match="PI stream closed"):
             await asyncio.wait_for(
-                client.prompt_and_collect("[from=koena] hi"), timeout=2.0
+                client.prompt_and_collect("[from=alice] hi"), timeout=2.0
             )
     finally:
         await client.stop()
@@ -235,7 +235,7 @@ async def test_event_queue_is_bounded_and_does_not_drop_on_normal_turn():
     try:
         assert MAX_QUEUED_EVENTS > 0  # the bound exists
         text = await asyncio.wait_for(
-            client.prompt_and_collect("[from=koena] hi"), timeout=2.0
+            client.prompt_and_collect("[from=alice] hi"), timeout=2.0
         )
     finally:
         await client.stop()

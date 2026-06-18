@@ -25,8 +25,8 @@ async def test_same_chat_messages_are_serialized_in_order():
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("123", "koena", "first"),
-                msg_event("123", "koena", "second"),
+                msg_event("123", "alice", "first"),
+                msg_event("123", "alice", "second"),
             ]
         ),
         router=_single_client_router(pi),
@@ -39,7 +39,7 @@ async def test_same_chat_messages_are_serialized_in_order():
     # The first prompt is in flight; the second has NOT started (lock held).
     await wait_until(lambda: len(pi.pending) >= 1)
     assert len(pi.pending) == 1
-    assert pi.commands[0]["message"] == "[from=koena] first"
+    assert pi.commands[0]["message"] == "[from=alice] first"
 
     # Let other tasks run; the second must still be blocked out.
     await asyncio.sleep(0)
@@ -48,14 +48,14 @@ async def test_same_chat_messages_are_serialized_in_order():
     # Release the first -> the second starts.
     pi.pending[0].set_result(None)
     await wait_until(lambda: len(pi.pending) >= 2)
-    assert pi.commands[1]["message"] == "[from=koena] second"
+    assert pi.commands[1]["message"] == "[from=alice] second"
 
     pi.pending[1].set_result(None)
     await drain_task
 
     assert [c["message"] for c in pi.commands] == [
-        "[from=koena] first",
-        "[from=koena] second",
+        "[from=alice] first",
+        "[from=alice] second",
     ]
 
 
@@ -75,7 +75,7 @@ async def test_different_chats_run_concurrently():
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("123", "koena", "hello"),
+                msg_event("123", "alice", "hello"),
                 msg_event("456", "alice", "hi"),
             ]
         ),
@@ -96,7 +96,7 @@ async def test_different_chats_run_concurrently():
     clients["456"].pending[0].set_result(None)
     await drain_task
 
-    assert clients["123"].commands[0]["message"] == "[from=koena] hello"
+    assert clients["123"].commands[0]["message"] == "[from=alice] hello"
     assert clients["456"].commands[0]["message"] == "[from=alice] hi"
 
 

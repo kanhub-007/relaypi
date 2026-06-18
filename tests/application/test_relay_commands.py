@@ -19,7 +19,7 @@ async def test_reset_command_is_forwarded_as_a_prompt():
     pi = FakeAgentClient(reply="Session reset")
     sender = FakeMessageSender()
     relay = Relay(
-        source=FakeMessageSource([msg_event("123", "koena", "/reset")]),
+        source=FakeMessageSource([msg_event("123", "alice", "/reset")]),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=AllowAllList(),
@@ -28,5 +28,5 @@ async def test_reset_command_is_forwarded_as_a_prompt():
     await relay.drain()
 
     # Forwarded verbatim with the display prefix — no interception, no new_session.
-    assert pi.commands == [{"type": "prompt", "message": "[from=koena] /reset"}]
+    assert pi.commands == [{"type": "prompt", "message": "[from=alice] /reset"}]
     assert sender.sent == [{"chat_id": "123", "text": "Session reset"}]

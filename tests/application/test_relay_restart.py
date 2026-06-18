@@ -61,8 +61,8 @@ async def test_crashed_chat_recovers_on_next_message_and_other_chats_unaffected(
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("123", "koena", "first"),  # PI crashes mid-turn
-                msg_event("123", "koena", "second"),  # restart -> succeeds
+                msg_event("123", "alice", "first"),  # PI crashes mid-turn
+                msg_event("123", "alice", "second"),  # restart -> succeeds
                 msg_event("456", "alice", "hello"),  # other chat, unaffected
             ]
         ),

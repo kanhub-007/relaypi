@@ -66,7 +66,7 @@ async def test_websocket_source_subscribes_and_yields_events(clean_env, monkeypa
 
     done = asyncio.Event()
     server_task = asyncio.create_task(
-        _serve_one_event(port, msg_event("123", "koena", "hello"), done)
+        _serve_one_event(port, msg_event("123", "alice", "hello"), done)
     )
     # Tiny allow-all Relay so we can observe the event reaching the router.
     seen: list[str] = []
@@ -120,7 +120,7 @@ async def test_factory_builds_relay_with_concrete_adapters(
         # Allowlist was loaded by the factory from cfg.allowlist_path and gates.
         from relaypi.core.application.parse import parse_inbound
 
-        assert relay._allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123)))  # type: ignore[attr-defined]
-        assert not relay._allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=999)))  # type: ignore[attr-defined]
+        assert relay._allowlist.allows(parse_inbound(msg_event("123", "x", "hi", user_id=123)))  # type: ignore[attr-defined]
+        assert not relay._allowlist.allows(parse_inbound(msg_event("999", "x", "hi", user_id=999)))  # type: ignore[attr-defined]
     finally:
         await relay._sender.close()  # type: ignore[attr-defined]

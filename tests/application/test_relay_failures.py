@@ -32,7 +32,7 @@ async def test_pi_failure_yields_error_reply_not_crash():
     pi = ExplodingAgentClient()
     sender = FakeMessageSender()
     relay = Relay(
-        source=FakeMessageSource([msg_event("123", "koena", "oops")]),
+        source=FakeMessageSource([msg_event("123", "alice", "oops")]),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=AllowAllList(),
@@ -52,7 +52,7 @@ async def test_total_sender_outage_does_not_kill_relay():
 
     pi = FakeAgentClient(reply="hi")
     relay = Relay(
-        source=FakeMessageSource([msg_event("123", "koena", "hello")]),
+        source=FakeMessageSource([msg_event("123", "alice", "hello")]),
         router=FakeRouter(pi),
         sender=DeadSender(),
         allowlist=AllowAllList(),
@@ -83,8 +83,8 @@ async def test_failure_releases_lock_so_next_message_works():
     relay = Relay(
         source=FakeMessageSource(
             [
-                msg_event("123", "koena", "first"),
-                msg_event("123", "koena", "second"),
+                msg_event("123", "alice", "first"),
+                msg_event("123", "alice", "second"),
             ]
         ),
         router=FakeRouter(pi),
@@ -112,7 +112,7 @@ async def test_unexpected_exception_also_yields_error_reply_not_crash():
     pi = BuggyAgentClient()
     sender = FakeMessageSender()
     relay = Relay(
-        source=FakeMessageSource([msg_event("123", "koena", "oops")]),
+        source=FakeMessageSource([msg_event("123", "alice", "oops")]),
         router=FakeRouter(pi),
         sender=sender,
         allowlist=AllowAllList(),

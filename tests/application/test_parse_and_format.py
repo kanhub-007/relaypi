@@ -12,20 +12,23 @@ from relaypi.core.application.parse import parse_inbound
 
 
 def _msg_event(
-    chat_id: str = "123",
-    username: str | None = "koena",
+    chat_id: str = "1",
+    username: str | None = "alice",
     first_name: str = "X",
     text: str = "analyze BTC",
     user_id: int = 1,
-    chat_type: str = "private",
 ) -> dict:
-    """Build a telegramy-shaped message event for tests."""
+    """Build a telegramy-shaped message event for tests (real format)."""
+    sender: dict = {"id": user_id, "first_name": first_name}
+    if username is not None:
+        sender["username"] = username
     return {
-        "message": {
-            "chat": {"id": chat_id, "type": chat_type},
-            "from": {"id": user_id, "username": username, "first_name": first_name},
+        "type": "message",
+        "event": {
+            "chat_id": chat_id,
+            "from_user": sender,
             "text": text,
-        }
+        },
     }
 
 
@@ -36,16 +39,28 @@ def test_parse_extracts_message_fields():
     msg = parse_inbound(_msg_event())
 
     assert msg is not None
-    assert msg.chat_id == "123"
+    assert msg.chat_id == "1"
+    # chat_type is inferred: chat_id matches sender_user_id -> "private"
     assert msg.chat_type == "private"
     assert msg.sender_user_id == 1
-    assert msg.sender_username == "koena"
+    assert msg.sender_username == "alice"
     assert msg.sender_first_name == "X"
     assert msg.text == "analyze BTC"
 
 
+def test_parse_infers_group_chat_type():
+    # Group chats have negative ids not matching the sender.
+    msg = parse_inbound(_msg_event(chat_id="-100111000", user_id=555))
+    assert msg is not None
+    assert msg.chat_type == "group"
+
+
 def test_parse_returns_none_for_non_message_event():
     assert parse_inbound({"callback_query": {"id": "abc"}}) is None
+
+
+def test_parse_returns_none_for_non_message_type():
+    assert parse_inbound({"type": "callback_query", "event": {"text": "x"}}) is None
 
 
 def test_parse_returns_none_for_whitespace_only_text():
@@ -53,18 +68,19 @@ def test_parse_returns_none_for_whitespace_only_text():
 
 
 def test_parse_returns_none_when_text_missing():
-    event = {"message": {"chat": {"id": "1"}, "from": {"id": 1}}}
+    event = {"type": "message", "event": {"chat_id": "1", "from_user": {"id": 1}}}
     assert parse_inbound(event) is None
 
 
 def test_parse_returns_none_when_sender_id_missing():
     # No sender id -> can never be allowlisted -> fail closed at parse time.
     event = {
-        "message": {
-            "chat": {"id": "1", "type": "private"},
-            "from": {"first_name": "X"},
+        "type": "message",
+        "event": {
+            "chat_id": "1",
+            "from_user": {"first_name": "X"},
             "text": "hi",
-        }
+        },
     }
     assert parse_inbound(event) is None
 
@@ -73,11 +89,12 @@ def test_parse_returns_none_when_sender_id_not_an_int():
     # A non-numeric id must not raise (which would be masked downstream); it
     # returns None so the message is dropped cleanly.
     event = {
-        "message": {
-            "chat": {"id": "1", "type": "private"},
-            "from": {"id": "abc"},
+        "type": "message",
+        "event": {
+            "chat_id": "1",
+            "from_user": {"id": "abc"},
             "text": "hi",
-        }
+        },
     }
     assert parse_inbound(event) is None
 
@@ -90,8 +107,8 @@ def test_parse_strips_surrounding_whitespace_from_text():
 
 
 def test_format_uses_username_when_present():
-    msg = parse_inbound(_msg_event(username="koena", text="hi"))
-    assert format_prompt(msg).text == "[from=koena] hi"
+    msg = parse_inbound(_msg_event(username="alice", text="hi"))
+    assert format_prompt(msg).text == "[from=alice] hi"
 
 
 def test_format_falls_back_to_first_name_when_no_username():
@@ -100,9 +117,14 @@ def test_format_falls_back_to_first_name_when_no_username():
 
 
 def test_format_uses_anonymous_when_no_username_or_first_name():
-    event = _msg_event(text="hi")
-    event["message"]["from"].pop("username")
-    event["message"]["from"].pop("first_name")
+    event = {
+        "type": "message",
+        "event": {
+            "chat_id": "1",
+            "from_user": {"id": 1},
+            "text": "hi",
+        },
+    }
     msg = parse_inbound(event)
     assert format_prompt(msg).text == "[from=anonymous] hi"
 

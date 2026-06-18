@@ -18,9 +18,11 @@ from relaypi.infrastructure.allowlist_config import (
 from tests.fakes.event_helpers import msg_event
 
 
-def _msg(chat_id, user_id, chat_type="private", username="x"):
+def _msg(chat_id=None, user_id=1, username="x"):
+    if chat_id is None:
+        chat_id = str(user_id)
     return parse_inbound(
-        msg_event(chat_id, username, "hi", chat_type=chat_type, user_id=user_id)
+        msg_event(str(chat_id), username, "hi", user_id=user_id)
     )
 
 
@@ -31,9 +33,9 @@ def test_dm_allowed_only_for_allowlisted_user():
     allowlist = ConfigAllowlist(dm_users={987654321}, groups={})
 
     # Not allowlisted -> dropped
-    assert allowlist.allows(_msg("1", user_id=999)) is False
+    assert allowlist.allows(_msg(user_id=999)) is False
     # Allowlisted -> allowed
-    assert allowlist.allows(_msg("2", user_id=987654321)) is True
+    assert allowlist.allows(_msg(user_id=987654321)) is True
 
 
 # --- Group modes ---
@@ -44,7 +46,7 @@ def test_open_group_allows_any_member():
         dm_users=set(),
         groups={-100111000: GroupConfig(mode="open")},
     )
-    assert allowlist.allows(_msg(-100111000, user_id=555, chat_type="group")) is True
+    assert allowlist.allows(_msg(-100111000, user_id=555)) is True
 
 
 def test_restricted_group_allows_only_listed_members():
@@ -56,10 +58,10 @@ def test_restricted_group_allows_only_listed_members():
     )
     # Member -> allowed
     assert (
-        allowlist.allows(_msg(-100222000, user_id=111222333, chat_type="group")) is True
+        allowlist.allows(_msg(-100222000, user_id=111222333)) is True
     )
     # Non-member -> dropped
-    assert allowlist.allows(_msg(-100222000, user_id=999, chat_type="group")) is False
+    assert allowlist.allows(_msg(-100222000, user_id=999)) is False
 
 
 # --- Config validation (M2): invalid modes surface at load time ---
@@ -77,8 +79,8 @@ def test_load_allowlist_accepts_open_and_restricted():
         "  - id: -1\n    mode: open\n"
         "  - id: -2\n    mode: restricted\n    members: [1]\n"
     )
-    assert allowlist.allows(_msg(-1, user_id=555, chat_type="group")) is True
-    assert allowlist.allows(_msg(-2, user_id=1, chat_type="group")) is True
+    assert allowlist.allows(_msg(-1, user_id=555)) is True
+    assert allowlist.allows(_msg(-2, user_id=1)) is True
 
 
 # --- Edge cases (the scenario's "also test" list) ---
@@ -87,7 +89,7 @@ def test_load_allowlist_accepts_open_and_restricted():
 def test_unconfigured_group_chat_dropped():
     allowlist = ConfigAllowlist(dm_users={987654321}, groups={})
     assert (
-        allowlist.allows(_msg(-999999, user_id=987654321, chat_type="group")) is False
+        allowlist.allows(_msg(-999999, user_id=987654321)) is False
     )
 
 
@@ -95,7 +97,7 @@ def test_unconfigured_chat_type_dropped():
     allowlist = ConfigAllowlist(dm_users={987654321}, groups={})
     # "channel" is neither private nor a configured group
     assert (
-        allowlist.allows(_msg(-100333000, user_id=987654321, chat_type="channel"))
+        allowlist.allows(_msg(-100333000, user_id=987654321))
         is False
     )
 
@@ -116,14 +118,14 @@ def test_allowlist_loaded_from_yaml_config():
     allowlist = load_allowlist(yaml_text)
 
     # DM user allowed
-    assert allowlist.allows(_msg("1", user_id=987654321)) is True
+    assert allowlist.allows(_msg(user_id=987654321)) is True
     # Open group: any member
-    assert allowlist.allows(_msg(-100111000, user_id=555, chat_type="group")) is True
+    assert allowlist.allows(_msg(-100111000, user_id=555)) is True
     # Restricted group: member allowed, stranger dropped
     assert (
-        allowlist.allows(_msg(-100222000, user_id=111222333, chat_type="group")) is True
+        allowlist.allows(_msg(-100222000, user_id=111222333)) is True
     )
-    assert allowlist.allows(_msg(-100222000, user_id=999, chat_type="group")) is False
+    assert allowlist.allows(_msg(-100222000, user_id=999)) is False
 
 
 # --- load_allowlist_from_path (M1): file I/O + fail-closed ---
@@ -134,10 +136,10 @@ def test_load_allowlist_from_path_reads_yaml_file(tmp_path):
     f.write_text("dm_users: [123]\n" "groups:\n  - id: -100\n    mode: open\n")
     allowlist = load_allowlist_from_path(str(f))
     assert (
-        allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123))) is True
+        allowlist.allows(parse_inbound(msg_event("123", "x", "hi", user_id=123))) is True
     )
     assert (
-        allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=999))) is False
+        allowlist.allows(parse_inbound(msg_event("999", "x", "hi", user_id=999))) is False
     )
 
 
