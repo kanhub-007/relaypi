@@ -6,7 +6,7 @@ This test locks that behaviour so a future interception feature doesn't
 silently regress the simple-forward path until it's deliberately switched on.
 """
 
-from hal_relay.core.application.relay import Relay
+from relaypi.core.application.relay import Relay
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_agent_client import FakeAgentClient

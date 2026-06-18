@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 class Allowlist(ABC):

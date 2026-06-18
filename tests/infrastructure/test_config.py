@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from hal_relay.config import Config
+from relaypi.config import Config
 
 
 @pytest.fixture
@@ -29,18 +29,18 @@ def test_defaults_when_no_env_vars_set(clean_env):
     assert cfg.project_dir == "hal"
     assert cfg.session_dir == "hal/sessions"
     assert cfg.allowlist_path == "config/allowlist.yaml"
-    # pi_bin = HAL_PI_BIN or shutil.which("pi") or "pi". We don't assume whether
+    # pi_bin = RELAYPI_PI_BIN or shutil.which("pi") or "pi". We don't assume whether
     # pi happens to be installed on the test host; just assert the contract.
     assert cfg.pi_bin == (shutil.which("pi") or "pi")
 
 
 def test_env_vars_override_defaults(clean_env, monkeypatch):
-    monkeypatch.setenv("HAL_RELAY_WS_URL", "ws://bridge:9000")
-    monkeypatch.setenv("HAL_RELAY_MCP_URL", "http://bridge:8005/mcp")
-    monkeypatch.setenv("HAL_PI_BIN", "/custom/pi")
-    monkeypatch.setenv("HAL_PROJECT_DIR", "/projects/hal")
-    monkeypatch.setenv("HAL_SESSION_DIR", "/projects/hal/sess")
-    monkeypatch.setenv("HAL_ALLOWLIST", "/etc/allowlist.yaml")
+    monkeypatch.setenv("RELAYPI_WS_URL", "ws://bridge:9000")
+    monkeypatch.setenv("RELAYPI_MCP_URL", "http://bridge:8005/mcp")
+    monkeypatch.setenv("RELAYPI_PI_BIN", "/custom/pi")
+    monkeypatch.setenv("RELAYPI_PROJECT_DIR", "/projects/hal")
+    monkeypatch.setenv("RELAYPI_SESSION_DIR", "/projects/hal/sess")
+    monkeypatch.setenv("RELAYPI_ALLOWLIST", "/etc/allowlist.yaml")
 
     cfg = Config()
 
@@ -53,7 +53,7 @@ def test_env_vars_override_defaults(clean_env, monkeypatch):
 
 
 def test_explicit_pi_bin_takes_precedence_over_which(clean_env, monkeypatch):
-    monkeypatch.setenv("HAL_PI_BIN", "/explicit/path/pi")
+    monkeypatch.setenv("RELAYPI_PI_BIN", "/explicit/path/pi")
     cfg = Config()
     assert cfg.pi_bin == "/explicit/path/pi"
 
@@ -63,7 +63,7 @@ def test_config_does_not_read_the_allowlist_file(clean_env, monkeypatch, tmp_pat
     # nonexistent file must NOT raise (and must NOT load anything) — the factory
     # loads the allowlist later, separately.
     missing = tmp_path / "does_not_exist.yaml"
-    monkeypatch.setenv("HAL_ALLOWLIST", str(missing))
+    monkeypatch.setenv("RELAYPI_ALLOWLIST", str(missing))
 
     cfg = Config()  # no raise
 

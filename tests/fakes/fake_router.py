@@ -4,7 +4,7 @@ Used when a test doesn't care about per-chat isolation. Tests that do care
 define an inline fake router (see test_distinct_chats_get_distinct_sessions).
 """
 
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.agent_client import AgentClient
 
 
 class FakeRouter:

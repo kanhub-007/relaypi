@@ -1,4 +1,4 @@
-# HAL Relay — Implementation Guide
+# RelayPI — Implementation Guide
 
 Clean Architecture (Python flavor per AGENTS.md). The relay has no domain
 logic, so `core/domain` holds interfaces + transport DTOs only; `core/application`
@@ -22,7 +22,7 @@ section before writing the PI client (Step 5) — it lists four ways to get it w
 **File:** `pyproject.toml`
 ```toml
 [project]
-name = "hal-relay"
+name = "relaypi"
 version = "0.1.0"
 requires-python = ">=3.12"
 # No MCP SDK: telegramy's send tools are called via raw JSON-RPC over
@@ -39,11 +39,11 @@ asyncio_mode = "auto"   # async tests run without @pytest.mark.asyncio
 line-length = 88
 ```
 
-**File:** `hal_relay/__init__.py` (empty)
+**File:** `relaypi/__init__.py` (empty)
 
 **Directory layout (one class per file per AGENTS.md §5):**
 ```
-hal_relay/
+relaypi/
 ├── __init__.py
 ├── main.py                               # entry point
 ├── config.py                             # env + allowlist loading
@@ -100,7 +100,7 @@ tests/
 
 ## Step 2: Transport DTOs + interfaces
 
-**File:** `hal_relay/core/domain/entities/inbound_message.py`
+**File:** `relaypi/core/domain/entities/inbound_message.py`
 ```python
 from dataclasses import dataclass
 
@@ -115,7 +115,7 @@ class InboundMessage:
     text: str
 ```
 
-**File:** `hal_relay/core/domain/entities/formatted_prompt.py`
+**File:** `relaypi/core/domain/entities/formatted_prompt.py`
 ```python
 from dataclasses import dataclass
 
@@ -125,7 +125,7 @@ class FormattedPrompt:
     text: str   # "[from={username}] {message}"
 ```
 
-**File:** `hal_relay/core/domain/entities/outbound_reply.py`
+**File:** `relaypi/core/domain/entities/outbound_reply.py`
 ```python
 from dataclasses import dataclass
 
@@ -136,7 +136,7 @@ class OutboundReply:
     text: str
 ```
 
-**File:** `hal_relay/core/domain/entities/group_config.py`
+**File:** `relaypi/core/domain/entities/group_config.py`
 ```python
 from dataclasses import dataclass, field
 
@@ -147,7 +147,7 @@ class GroupConfig:
     members: frozenset[int] = field(default_factory=frozenset)  # only when restricted
 ```
 
-**File:** `hal_relay/core/domain/interfaces/message_source.py`
+**File:** `relaypi/core/domain/interfaces/message_source.py`
 ```python
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
@@ -160,7 +160,7 @@ class MessageSource(ABC):
     def events(self) -> AsyncIterator[dict]: ...
 ```
 
-**File:** `hal_relay/core/domain/interfaces/agent_client.py`
+**File:** `relaypi/core/domain/interfaces/agent_client.py`
 ```python
 from abc import ABC, abstractmethod
 
@@ -178,7 +178,7 @@ class AgentClient(ABC):
     async def stop(self) -> None: ...
 ```
 
-**File:** `hal_relay/core/domain/interfaces/message_sender.py`
+**File:** `relaypi/core/domain/interfaces/message_sender.py`
 ```python
 from abc import ABC, abstractmethod
 
@@ -192,11 +192,11 @@ class MessageSender(ABC):
     async def close(self) -> None: ...
 ```
 
-**File:** `hal_relay/core/domain/interfaces/allowlist.py`
+**File:** `relaypi/core/domain/interfaces/allowlist.py`
 ```python
 from abc import ABC, abstractmethod
 
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 class Allowlist(ABC):
@@ -206,11 +206,11 @@ class Allowlist(ABC):
     def allows(self, msg: InboundMessage) -> bool: ...
 ```
 
-**File:** `hal_relay/core/domain/interfaces/session_router.py`
+**File:** `relaypi/core/domain/interfaces/session_router.py`
 ```python
 from abc import ABC, abstractmethod
 
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.agent_client import AgentClient
 
 
 class SessionRouter(ABC):
@@ -222,15 +222,15 @@ class SessionRouter(ABC):
     async def stop_all(self) -> None: ...
 ```
 
-**Verify:** `ruff check hal_relay/core/domain/` clean.
+**Verify:** `ruff check relaypi/core/domain/` clean.
 
 ---
 
 ## Step 3: Message parser + formatter (pure functions)
 
-**File:** `hal_relay/core/application/parse.py`
+**File:** `relaypi/core/application/parse.py`
 ```python
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 def parse_inbound(event: dict) -> InboundMessage | None:
@@ -253,10 +253,10 @@ def parse_inbound(event: dict) -> InboundMessage | None:
     )
 ```
 
-**File:** `hal_relay/core/application/format_prompt.py`
+**File:** `relaypi/core/application/format_prompt.py`
 ```python
-from hal_relay.core.domain.entities.formatted_prompt import FormattedPrompt
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.formatted_prompt import FormattedPrompt
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 def format_prompt(msg: InboundMessage) -> FormattedPrompt:
@@ -275,11 +275,11 @@ def format_prompt(msg: InboundMessage) -> FormattedPrompt:
 
 ## Step 4: Allowlist (policy)
 
-**File:** `hal_relay/infrastructure/allowlist_config.py`
+**File:** `relaypi/infrastructure/allowlist_config.py`
 ```python
-from hal_relay.core.domain.entities.group_config import GroupConfig
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
-from hal_relay.core.domain.interfaces.allowlist import Allowlist
+from relaypi.core.domain.entities.group_config import GroupConfig
+from relaypi.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.interfaces.allowlist import Allowlist
 
 
 class ConfigAllowlist(Allowlist):
@@ -333,7 +333,7 @@ The client must:
    restart; bound `proc.wait()` with a timeout; **bound each turn** so a dead
    PI mid-turn doesn't hold the per-chat lock forever.
 
-**File:** `hal_relay/infrastructure/adapters/pi_rpc_client.py`
+**File:** `relaypi/infrastructure/adapters/pi_rpc_client.py`
 ```python
 """PI RPC client — one subprocess per chat, with a demuxing reader."""
 
@@ -543,13 +543,13 @@ of a pipe and reads commands from the other. Assert:
 
 ## Step 6: Session router + telegramy sender
 
-**File:** `hal_relay/infrastructure/session_router_impl.py`
+**File:** `relaypi/infrastructure/session_router_impl.py`
 ```python
 from pathlib import Path
 
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
-from hal_relay.core.domain.interfaces.session_router import SessionRouter
-from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
+from relaypi.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.session_router import SessionRouter
+from relaypi.infrastructure.adapters.pi_rpc_client import PIRpcClient
 
 
 class PerChatSessionRouter(SessionRouter):
@@ -584,7 +584,7 @@ class PerChatSessionRouter(SessionRouter):
         self._clients.clear()
 ```
 
-**File:** `hal_relay/infrastructure/adapters/telegramy_mcp_sender.py`
+**File:** `relaypi/infrastructure/adapters/telegramy_mcp_sender.py`
 
 The relay calls telegramy's MCP send tools over streamable-http. **Mirror
 telegramy's own `.pi/extensions/telegramy.ts` `McpHttpClient`** (initialize →
@@ -602,7 +602,7 @@ import logging
 
 import httpx
 
-from hal_relay.core.domain.interfaces.message_sender import MessageSender
+from relaypi.core.domain.interfaces.message_sender import MessageSender
 
 logger = logging.getLogger(__name__)
 
@@ -629,7 +629,7 @@ class TelegramyMCPSender(MessageSender):
             "jsonrpc": "2.0", "id": 0, "method": "initialize",
             "params": {
                 "protocolVersion": "2024-11-05", "capabilities": {},
-                "clientInfo": {"name": "hal-relay", "version": "0.1.0"},
+                "clientInfo": {"name": "relaypi", "version": "0.1.0"},
             },
         }, headers=self._headers(init=True))
         resp.raise_for_status()
@@ -678,20 +678,20 @@ class TelegramyMCPSender(MessageSender):
 
 ## Step 7: The Relay orchestrator (use case) + WS source
 
-**File:** `hal_relay/core/application/relay.py`
+**File:** `relaypi/core/application/relay.py`
 ```python
-"""HAL Relay use case: trust -> route -> format -> prompt -> capture -> send."""
+"""RelayPI use case: trust -> route -> format -> prompt -> capture -> send."""
 
 import asyncio
 import logging
 
-from hal_relay.core.application.format_prompt import format_prompt
-from hal_relay.core.application.parse import parse_inbound
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
-from hal_relay.core.domain.interfaces.allowlist import Allowlist
-from hal_relay.core.domain.interfaces.message_sender import MessageSender
-from hal_relay.core.domain.interfaces.message_source import MessageSource
-from hal_relay.core.domain.interfaces.session_router import SessionRouter
+from relaypi.core.application.format_prompt import format_prompt
+from relaypi.core.application.parse import parse_inbound
+from relaypi.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.interfaces.allowlist import Allowlist
+from relaypi.core.domain.interfaces.message_sender import MessageSender
+from relaypi.core.domain.interfaces.message_source import MessageSource
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 
 logger = logging.getLogger(__name__)
 
@@ -756,7 +756,7 @@ class Relay:
         await self._sender.close()   # close the MCP httpx client cleanly
 ```
 
-**File:** `hal_relay/infrastructure/adapters/websocket_message_source.py`
+**File:** `relaypi/infrastructure/adapters/websocket_message_source.py`
 ```python
 """Filtered inbound from telegramy (contract 1: selective subscriptions).
 
@@ -790,7 +790,7 @@ class WebSocketMessageSource:
 
 ## Step 8: Composition root + entry point
 
-**File:** `hal_relay/config.py`
+**File:** `relaypi/config.py`
 ```python
 """Load relay configuration from env vars + allowlist.yaml."""
 import os
@@ -799,19 +799,19 @@ from pathlib import Path
 
 import yaml
 
-from hal_relay.core.domain.entities.group_config import GroupConfig
+from relaypi.core.domain.entities.group_config import GroupConfig
 
 
 class Config:
     def __init__(self) -> None:
-        self.telegramy_ws_url = os.environ.get("HAL_RELAY_WS_URL", "ws://localhost:8765")
-        self.telegramy_mcp_url = os.environ.get("HAL_RELAY_MCP_URL", "http://localhost:8005/mcp")
+        self.telegramy_ws_url = os.environ.get("RELAYPI_WS_URL", "ws://localhost:8765")
+        self.telegramy_mcp_url = os.environ.get("RELAYPI_MCP_URL", "http://localhost:8005/mcp")
         # WINDOWS: `pi` is a .cmd shim; resolve the full path so
-        # create_subprocess_exec finds it. Override with HAL_PI_BIN if needed.
-        self.pi_bin = os.environ.get("HAL_PI_BIN") or shutil.which("pi") or "pi"
-        self.project_dir = os.environ.get("HAL_PROJECT_DIR", "hal")
-        self.session_dir = os.environ.get("HAL_SESSION_DIR", "hal/sessions")
-        self.allowlist_path = os.environ.get("HAL_ALLOWLIST", "config/allowlist.yaml")
+        # create_subprocess_exec finds it. Override with RELAYPI_PI_BIN if needed.
+        self.pi_bin = os.environ.get("RELAYPI_PI_BIN") or shutil.which("pi") or "pi"
+        self.project_dir = os.environ.get("RELAYPI_PROJECT_DIR", "hal")
+        self.session_dir = os.environ.get("RELAYPI_SESSION_DIR", "hal/sessions")
+        self.allowlist_path = os.environ.get("RELAYPI_ALLOWLIST", "config/allowlist.yaml")
         self.dm_users, self.groups = _load_allowlist(self.allowlist_path)
 
 
@@ -830,21 +830,21 @@ def _load_allowlist(path: str) -> tuple[set[int], dict[int, GroupConfig]]:
 **Environment variables:**
 | Var | Default | Purpose |
 |-----|---------|---------|
-| `HAL_RELAY_WS_URL` | `ws://localhost:8765` | telegramy WebSocket |
-| `HAL_RELAY_MCP_URL` | `http://localhost:8005/mcp` | telegramy MCP send endpoint |
-| `HAL_PI_BIN` | `shutil.which("pi")` | PI executable path (Windows: the .cmd shim) |
-| `HAL_PROJECT_DIR` | `hal` | HAL project dir (AGENTS.md + .pi/) |
-| `HAL_SESSION_DIR` | `hal/sessions` | per-chat .jsonl root |
-| `HAL_ALLOWLIST` | `config/allowlist.yaml` | allowlist config file |
+| `RELAYPI_WS_URL` | `ws://localhost:8765` | telegramy WebSocket |
+| `RELAYPI_MCP_URL` | `http://localhost:8005/mcp` | telegramy MCP send endpoint |
+| `RELAYPI_PI_BIN` | `shutil.which("pi")` | PI executable path (Windows: the .cmd shim) |
+| `RELAYPI_PROJECT_DIR` | `hal` | HAL project dir (AGENTS.md + .pi/) |
+| `RELAYPI_SESSION_DIR` | `hal/sessions` | per-chat .jsonl root |
+| `RELAYPI_ALLOWLIST` | `config/allowlist.yaml` | allowlist config file |
 
-**File:** `hal_relay/startup/factory.py`
+**File:** `relaypi/startup/factory.py`
 ```python
-from hal_relay.config import Config
-from hal_relay.core.application.relay import Relay
-from hal_relay.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
-from hal_relay.infrastructure.adapters.websocket_message_source import WebSocketMessageSource
-from hal_relay.infrastructure.allowlist_config import ConfigAllowlist
-from hal_relay.infrastructure.session_router_impl import PerChatSessionRouter
+from relaypi.config import Config
+from relaypi.core.application.relay import Relay
+from relaypi.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
+from relaypi.infrastructure.adapters.websocket_message_source import WebSocketMessageSource
+from relaypi.infrastructure.allowlist_config import ConfigAllowlist
+from relaypi.infrastructure.session_router_impl import PerChatSessionRouter
 
 
 def create_relay() -> Relay:
@@ -856,13 +856,13 @@ def create_relay() -> Relay:
     return Relay(source, router, sender, allowlist)
 ```
 
-**File:** `hal_relay/main.py`
+**File:** `relaypi/main.py`
 ```python
 import asyncio
 import logging
 import sys
 
-from hal_relay.startup.factory import create_relay
+from relaypi.startup.factory import create_relay
 
 
 async def main() -> None:
@@ -889,7 +889,7 @@ if __name__ == "__main__":
         sys.exit(0)
 ```
 
-**Verify:** end-to-end smoke: `python -m hal_relay.main` with telegramy + PI + MCP services running; send a Telegram message, observe a reply.
+**Verify:** end-to-end smoke: `python -m relaypi.main` with telegramy + PI + MCP services running; send a Telegram message, observe a reply.
 
 ---
 
@@ -963,7 +963,7 @@ The relay is a small, seam-critical service — it must be legible on its own.
   `specs/.../01-story.md` "Where the Relay Fits".
 - Quickstart: prerequisites (telegramy running, PI installed, MCP services up),
   config (`config/allowlist.yaml`, env vars table from Step 8),
-  `pip install -e .`, `python -m hal_relay.main`.
+  `pip install -e .`, `python -m relaypi.main`.
 - The four contracts listed explicitly.
 - Windows note (pi resolution, signals).
 - Pointer to `docs/`.

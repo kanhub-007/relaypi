@@ -17,9 +17,9 @@ import asyncio
 import json
 import logging
 
-from hal_relay.core.domain.agent_error import AgentError
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
-from hal_relay.infrastructure.adapters.stream_transport import StreamTransport
+from relaypi.core.domain.agent_error import AgentError
+from relaypi.core.domain.interfaces.agent_client import AgentClient
+from relaypi.infrastructure.adapters.stream_transport import StreamTransport
 
 logger = logging.getLogger(__name__)
 

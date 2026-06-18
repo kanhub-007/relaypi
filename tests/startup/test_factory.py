@@ -17,11 +17,11 @@ import os
 import pytest
 from websockets.asyncio.server import serve
 
-from hal_relay.core.application.relay import Relay
-from hal_relay.infrastructure.adapters.websocket_message_source import (
+from relaypi.core.application.relay import Relay
+from relaypi.infrastructure.adapters.websocket_message_source import (
     WebSocketMessageSource,
 )
-from hal_relay.startup.factory import create_relay
+from relaypi.startup.factory import create_relay
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.fake_agent_client import FakeAgentClient
 from tests.fakes.fake_message_sender import FakeMessageSender
@@ -61,7 +61,7 @@ async def _serve_one_event(port: int, event: dict, done: asyncio.Event) -> None:
 
 async def test_websocket_source_subscribes_and_yields_events(clean_env, monkeypatch):
     port = 18765
-    monkeypatch.setenv("HAL_RELAY_WS_URL", f"ws://127.0.0.1:{port}")
+    monkeypatch.setenv("RELAYPI_WS_URL", f"ws://127.0.0.1:{port}")
 
     done = asyncio.Event()
     server_task = asyncio.create_task(
@@ -105,9 +105,9 @@ async def test_factory_builds_relay_with_concrete_adapters(
     # Point config at a temp allowlist so Config() doesn't require a repo file.
     allowlist = tmp_path / "allowlist.yaml"
     allowlist.write_text("dm_users: [123]\n")
-    monkeypatch.setenv("HAL_ALLOWLIST", str(allowlist))
+    monkeypatch.setenv("RELAYPI_ALLOWLIST", str(allowlist))
     monkeypatch.setenv(
-        "HAL_RELAY_WS_URL", "ws://127.0.0.1:9"
+        "RELAYPI_WS_URL", "ws://127.0.0.1:9"
     )  # unreachable; we won't run
 
     relay = create_relay()
@@ -117,7 +117,7 @@ async def test_factory_builds_relay_with_concrete_adapters(
         assert isinstance(relay._source, WebSocketMessageSource)  # type: ignore[attr-defined]
         assert isinstance(relay._sender, FakeMessageSender) is False  # real sender
         # Allowlist was loaded by the factory from cfg.allowlist_path and gates.
-        from hal_relay.core.application.parse import parse_inbound
+        from relaypi.core.application.parse import parse_inbound
 
         assert relay._allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=123)))  # type: ignore[attr-defined]
         assert not relay._allowlist.allows(parse_inbound(msg_event("1", "x", "hi", user_id=999)))  # type: ignore[attr-defined]

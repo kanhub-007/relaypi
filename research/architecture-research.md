@@ -1,4 +1,4 @@
-# HAL Relay — Architecture Research & Design Decisions
+# RelayPI — Architecture Research & Design Decisions
 
 > **Date:** 2026-06-17
 > **Context:** Designing the bridge between Telegram and PI for HAL, a personal AI assistant with coding capabilities.
@@ -270,7 +270,7 @@ python -m webdown.startup.mcp &
 python -m telegramy.src.main &
 
 # 2. Start the relay (spawns PI in RPC mode internally)
-python -m hal_relay.main
+python -m relaypi.main
 ```
 
 The relay spawns PI as a subprocess: `pi --mode rpc --config-dir config/hal --session-dir sessions/hal`
@@ -286,7 +286,7 @@ SIGTERM → relay sends shutdown to PI subprocess → PI exits gracefully → re
 PI's RPC mode uses strict JSONL framing over stdin/stdout. The relay needs a Python RPC client:
 
 ```python
-# hal_relay/pi_client.py — minimal RPC client for PI subprocess
+# relaypi/pi_client.py — minimal RPC client for PI subprocess
 
 class PIClient:
     """Manage a PI subprocess via RPC protocol."""
@@ -396,10 +396,10 @@ This is worth noting because it means PI's tool surface is extension-dependent. 
 
 | File | Purpose |
 |------|---------|
-| `C:/HAL/Github/hal-relay/specs/2026-06-17_hal-relay/01-story.md` | User story, architecture, non-goals |
-| `C:/HAL/Github/hal-relay/specs/2026-06-17_hal-relay/02-scenarios.md` | Gherkin scenarios with verify blocks |
-| `C:/HAL/Github/hal-relay/specs/2026-06-17_hal-relay/03-domain.md` | Domain model (minimal, stateless) |
-| `C:/HAL/Github/hal-relay/specs/2026-06-17_hal-relay/04-implementation.md` | Step-by-step build guide |
+| `C:/HAL/Github/relaypi/specs/2026-06-17_relaypi/01-story.md` | User story, architecture, non-goals |
+| `C:/HAL/Github/relaypi/specs/2026-06-17_relaypi/02-scenarios.md` | Gherkin scenarios with verify blocks |
+| `C:/HAL/Github/relaypi/specs/2026-06-17_relaypi/03-domain.md` | Domain model (minimal, stateless) |
+| `C:/HAL/Github/relaypi/specs/2026-06-17_relaypi/04-implementation.md` | Step-by-step build guide |
 | `C:/HAL/Github/openclaw/src/agents/harness/` | Reference: harness abstraction pattern |
 | `C:/HAL/Github/openclaw/src/channels/turn/kernel.ts` | Reference: channel turn processing |
 | `C:/HAL/Github/telegramy/src/presentation/mcp/` | telegramy MCP server (send tools) |

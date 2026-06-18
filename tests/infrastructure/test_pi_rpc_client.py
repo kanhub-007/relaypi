@@ -13,7 +13,7 @@ import asyncio
 
 import pytest
 
-from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
+from relaypi.infrastructure.adapters.pi_rpc_client import PIRpcClient
 from tests.fakes.fake_stream_transport import FakeStreamTransport
 
 
@@ -188,7 +188,7 @@ async def test_pi_dying_mid_turn_raises_and_does_not_hang():
 
     client = await _start(transport)
     try:
-        from hal_relay.core.domain.agent_error import AgentError
+        from relaypi.core.domain.agent_error import AgentError
 
         with pytest.raises(AgentError, match="PI stream closed"):
             await asyncio.wait_for(
@@ -206,7 +206,7 @@ async def test_event_queue_is_bounded_and_does_not_drop_on_normal_turn():
     # turn can't grow memory unboundedly. A normal turn that emits a burst of
     # events and then agent_end must still complete and deliver every event to
     # the consumer (the bound applies backpressure to the reader, not a drop).
-    from hal_relay.infrastructure.adapters.pi_rpc_client import MAX_QUEUED_EVENTS
+    from relaypi.infrastructure.adapters.pi_rpc_client import MAX_QUEUED_EVENTS
 
     burst = [{"type": "tool_execution_update", "toolCallId": str(i)} for i in range(50)]
     transport = FakeStreamTransport()

@@ -1,4 +1,4 @@
-# HAL Relay — Domain Model
+# RelayPI — Domain Model
 
 ## Overview
 

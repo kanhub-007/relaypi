@@ -23,9 +23,9 @@ so they're deterministic (stress-verified during development).
 ## Lint / format / typecheck
 
 ```bash
-ruff check hal_relay tests --fix
-black hal_relay tests
-mypy hal_relay            # optional; not yet wired into CI
+ruff check relaypi tests --fix
+black relaypi tests
+mypy relaypi            # optional; not yet wired into CI
 ```
 
 ## Architecture & layering

@@ -7,7 +7,7 @@ to create and returns FakeAgentClients. We assert on observable outcomes
 
 from pathlib import Path
 
-from hal_relay.infrastructure.session_router_impl import PerChatSessionRouter
+from relaypi.infrastructure.session_router_impl import PerChatSessionRouter
 from tests.fakes.fake_agent_client import FakeAgentClient
 
 

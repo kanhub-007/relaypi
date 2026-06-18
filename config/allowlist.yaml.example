@@ -1,4 +1,4 @@
-# HAL Relay allowlist — who can talk to HAL.
+# RelayPI allowlist — who can talk to HAL.
 #
 # Static: edit this file and restart the relay to change it.
 # See docs/configuration.md for the full reference.

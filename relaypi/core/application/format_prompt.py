@@ -5,8 +5,8 @@ and prepends it. chat_id never appears here — that's a load-bearing invariant
 (see 03-domain.md and test_chat_id_never_enters_formatted_prompt).
 """
 
-from hal_relay.core.domain.entities.formatted_prompt import FormattedPrompt
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.formatted_prompt import FormattedPrompt
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 
 def format_prompt(msg: InboundMessage) -> FormattedPrompt:

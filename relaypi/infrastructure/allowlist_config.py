@@ -10,9 +10,9 @@ import logging
 
 import yaml
 
-from hal_relay.core.domain.entities.group_config import GroupConfig
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
-from hal_relay.core.domain.interfaces.allowlist import Allowlist
+from relaypi.core.domain.entities.group_config import GroupConfig
+from relaypi.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.interfaces.allowlist import Allowlist
 
 logger = logging.getLogger(__name__)
 

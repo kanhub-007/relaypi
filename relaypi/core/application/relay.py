@@ -10,15 +10,15 @@ Concurrency model (see 03-domain.md):
 import asyncio
 import logging
 
-from hal_relay.core.application.format_prompt import format_prompt
-from hal_relay.core.application.parse import parse_inbound
-from hal_relay.core.application.presenter import ERROR_REPLY_TEXT
-from hal_relay.core.domain.agent_error import AgentError
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
-from hal_relay.core.domain.interfaces.allowlist import Allowlist
-from hal_relay.core.domain.interfaces.message_sender import MessageSender
-from hal_relay.core.domain.interfaces.message_source import MessageSource
-from hal_relay.core.domain.interfaces.session_router import SessionRouter
+from relaypi.core.application.format_prompt import format_prompt
+from relaypi.core.application.parse import parse_inbound
+from relaypi.core.application.presenter import ERROR_REPLY_TEXT
+from relaypi.core.domain.agent_error import AgentError
+from relaypi.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.interfaces.allowlist import Allowlist
+from relaypi.core.domain.interfaces.message_sender import MessageSender
+from relaypi.core.domain.interfaces.message_source import MessageSource
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 
 logger = logging.getLogger(__name__)
 

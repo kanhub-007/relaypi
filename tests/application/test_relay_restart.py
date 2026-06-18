@@ -9,9 +9,9 @@ Uses the real PIRpcClient (not a fake) over a FakeStreamTransport so the
 protocol's crash path is exercised honestly.
 """
 
-from hal_relay.core.application.relay import Relay
-from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
-from hal_relay.infrastructure.session_router_impl import PerChatSessionRouter
+from relaypi.core.application.relay import Relay
+from relaypi.infrastructure.adapters.pi_rpc_client import PIRpcClient
+from relaypi.infrastructure.session_router_impl import PerChatSessionRouter
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_message_sender import FakeMessageSender

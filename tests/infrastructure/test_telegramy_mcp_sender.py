@@ -15,7 +15,7 @@ import json
 import httpx
 import pytest
 
-from hal_relay.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
+from relaypi.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
 
 MCP_URL = "http://telegramy.test/mcp"
 

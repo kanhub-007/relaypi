@@ -8,9 +8,9 @@ import textwrap
 
 import pytest
 
-from hal_relay.core.application.parse import parse_inbound
-from hal_relay.core.domain.entities.group_config import GroupConfig
-from hal_relay.infrastructure.allowlist_config import (
+from relaypi.core.application.parse import parse_inbound
+from relaypi.core.domain.entities.group_config import GroupConfig
+from relaypi.infrastructure.allowlist_config import (
     ConfigAllowlist,
     load_allowlist,
     load_allowlist_from_path,
@@ -132,7 +132,7 @@ def test_allowlist_loaded_from_yaml_config():
 def test_load_allowlist_from_path_reads_yaml_file(tmp_path):
     from tests.fakes.event_helpers import msg_event
 
-    from hal_relay.core.application.parse import parse_inbound
+    from relaypi.core.application.parse import parse_inbound
 
     f = tmp_path / "allowlist.yaml"
     f.write_text("dm_users: [123]\n" "groups:\n  - id: -100\n    mode: open\n")
@@ -149,7 +149,7 @@ def test_load_allowlist_from_path_fails_closed_when_missing(tmp_path):
     # Missing file -> empty allowlist (everything dropped), no raise.
     from tests.fakes.event_helpers import msg_event
 
-    from hal_relay.core.application.parse import parse_inbound
+    from relaypi.core.application.parse import parse_inbound
 
     allowlist = load_allowlist_from_path(str(tmp_path / "absent.yaml"))
     assert (
@@ -161,7 +161,7 @@ def test_load_allowlist_from_path_fails_closed_when_unreadable(tmp_path):
     # A directory (or any OSError) -> empty allowlist, no raise.
     from tests.fakes.event_helpers import msg_event
 
-    from hal_relay.core.application.parse import parse_inbound
+    from relaypi.core.application.parse import parse_inbound
 
     allowlist = load_allowlist_from_path(str(tmp_path))  # tmp_path is a directory
     assert (

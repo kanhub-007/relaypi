@@ -7,8 +7,8 @@ display-only prompt string sent to PI.
 Black-box: assertions are on returned values, not on internals.
 """
 
-from hal_relay.core.application.format_prompt import format_prompt
-from hal_relay.core.application.parse import parse_inbound
+from relaypi.core.application.format_prompt import format_prompt
+from relaypi.core.application.parse import parse_inbound
 
 
 def _msg_event(

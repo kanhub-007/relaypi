@@ -1,4 +1,4 @@
-# HAL Relay — Architecture Decisions (ADRs)
+# RelayPI — Architecture Decisions (ADRs)
 
 > Context and rationale for the load-bearing decisions. Each ADR records *what*
 > was decided, *why*, and the *consequences*. See `01-story.md` for the overall
@@ -12,7 +12,7 @@
 durable delivery, and MCP send tools. It was tempting to put the relay (the PI
 binding logic) inside telegramy to reuse that infrastructure in-process.
 
-**Decision.** Keep hal-relay as a separate process. telegramy stays a generic,
+**Decision.** Keep relaypi as a separate process. telegramy stays a generic,
 agent-agnostic transport hub; the relay is its own service that connects to
 telegramy over its published WebSocket + MCP contracts.
 

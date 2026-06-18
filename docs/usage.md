@@ -3,7 +3,7 @@
 ## Running
 
 ```bash
-python -m hal_relay.main
+python -m relaypi.main
 ```
 
 The relay connects to telegramy's WebSocket, subscribes to message events, and
@@ -27,10 +27,10 @@ you need the full JSON-RPC traffic.
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | Messages ignored, no reply | Sender not in allowlist | Check `config/allowlist.yaml`; message logs say "dropped message from …" |
-| `pi` not found / spawn error | `HAL_PI_BIN` wrong | Set `HAL_PI_BIN` to the full path (Windows: the `pi.cmd` shim) |
+| `pi` not found / spawn error | `RELAYPI_PI_BIN` wrong | Set `RELAYPI_PI_BIN` to the full path (Windows: the `pi.cmd` shim) |
 | PI starts but `.pi/SYSTEM.md` not loaded | Project dir not trusted | Spawn uses `-a`; or pre-trust via an interactive `pi` in `hal/` |
 | "PI stream closed" errors | PI subprocess crashed | The relay auto-restarts on the next message; check PI's own logs for the crash cause |
-| Send fails ("telegramy MCP error") | telegramy MCP server down | Ensure `TELEGRAMY_MCP_TRANSPORT=http` and the server is reachable at `HAL_RELAY_MCP_URL` |
+| Send fails ("telegramy MCP error") | telegramy MCP server down | Ensure `TELEGRAMY_MCP_TRANSPORT=http` and the server is reachable at `RELAYPI_MCP_URL` |
 | Hangs forever on a turn | Unlikely — `TURN_TIMEOUT` (600s) + `abort` guards this | If seen, check `abort_timeout` (15s) escalation in logs |
 
 ## Verifying the pieces without Telegram

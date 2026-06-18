@@ -10,20 +10,20 @@ project dir as cwd and ``-a`` to trust it for non-interactive RPC.
 
 import logging
 
-from hal_relay.config import Config
-from hal_relay.core.application.relay import Relay
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
-from hal_relay.core.domain.interfaces.allowlist import Allowlist
-from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
-from hal_relay.infrastructure.adapters.subprocess_stream_transport import (
+from relaypi.config import Config
+from relaypi.core.application.relay import Relay
+from relaypi.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.allowlist import Allowlist
+from relaypi.infrastructure.adapters.pi_rpc_client import PIRpcClient
+from relaypi.infrastructure.adapters.subprocess_stream_transport import (
     SubprocessStreamTransport,
 )
-from hal_relay.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
-from hal_relay.infrastructure.adapters.websocket_message_source import (
+from relaypi.infrastructure.adapters.telegramy_mcp_sender import TelegramyMCPSender
+from relaypi.infrastructure.adapters.websocket_message_source import (
     WebSocketMessageSource,
 )
-from hal_relay.infrastructure.allowlist_config import load_allowlist_from_path
-from hal_relay.infrastructure.session_router_impl import PerChatSessionRouter
+from relaypi.infrastructure.allowlist_config import load_allowlist_from_path
+from relaypi.infrastructure.session_router_impl import PerChatSessionRouter
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ the module logger so a malformed feed is observable (not silently dropped).
 
 import logging
 
-from hal_relay.core.domain.entities.inbound_message import InboundMessage
+from relaypi.core.domain.entities.inbound_message import InboundMessage
 
 logger = logging.getLogger(__name__)
 

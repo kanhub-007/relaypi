@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.agent_client import AgentClient
 
 
 class SessionRouter(ABC):

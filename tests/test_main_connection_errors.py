@@ -3,7 +3,7 @@
 import httpx
 import websockets
 
-from hal_relay.main import _is_connection_error
+from relaypi.main import _is_connection_error
 
 
 def test_socket_errors_classified_as_connection_errors():

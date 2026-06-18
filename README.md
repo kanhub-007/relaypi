@@ -1,4 +1,4 @@
-# hal-relay
+# relaypi
 
 The binding layer between **telegramy** (Telegram transport) and **PI** (the HAL agent).
 A thin, focused service that turns Telegram messages into PI RPC prompts and
@@ -18,7 +18,7 @@ the relay is the seam between them.
                  ┌────────────────────────────────────────────┘
                  ▼                                            ┌──────────────┐
         ╔════════════════════════════════════════╗  RPC ▼    │   PI (HAL)   │
-        ║              hal-relay                  ║ stdin ──►│  (cognition) │
+        ║              relaypi                  ║ stdin ──►│  (cognition) │
         ║  • allowlist (DMs + open/restricted)   ║ stdout ◄─│  sessions    │
         ║  • chat_id → PI session routing        ║ (contr 2)│  compaction  │
         ║  • prompt formatting                   ║          │  tool loop   │
@@ -59,19 +59,19 @@ cd hal && pi -a --print "hello"   # sanity-check the profile loads
 cd ..
 
 # 4. Run
-python -m hal_relay.main
+python -m relaypi.main
 ```
 
 Environment variables (all optional — defaults shown):
 
 | Var | Default | Purpose |
 |-----|---------|---------|
-| `HAL_RELAY_WS_URL` | `ws://localhost:8765` | telegramy WebSocket |
-| `HAL_RELAY_MCP_URL` | `http://localhost:8005/mcp` | telegramy MCP send endpoint |
-| `HAL_PI_BIN` | `shutil.which("pi")` | PI executable (Windows: resolves the `.cmd` shim) |
-| `HAL_PROJECT_DIR` | `hal` | HAL project dir (AGENTS.md + .pi/) |
-| `HAL_SESSION_DIR` | `hal/sessions` | per-chat `.jsonl` root |
-| `HAL_ALLOWLIST` | `config/allowlist.yaml` | allowlist config file |
+| `RELAYPI_WS_URL` | `ws://localhost:8765` | telegramy WebSocket |
+| `RELAYPI_MCP_URL` | `http://localhost:8005/mcp` | telegramy MCP send endpoint |
+| `RELAYPI_PI_BIN` | `shutil.which("pi")` | PI executable (Windows: resolves the `.cmd` shim) |
+| `RELAYPI_PROJECT_DIR` | `hal` | HAL project dir (AGENTS.md + .pi/) |
+| `RELAYPI_SESSION_DIR` | `hal/sessions` | per-chat `.jsonl` root |
+| `RELAYPI_ALLOWLIST` | `config/allowlist.yaml` | allowlist config file |
 
 **Windows:** the relay is developed and tested on Windows. Shutdown is driven by
 `KeyboardInterrupt` (Ctrl+C / console close) because `loop.add_signal_handler`
@@ -82,7 +82,7 @@ is unsupported there. `pi` is resolved via `shutil.which` so the npm-installed
 
 ```bash
 pytest                 # 50 tests, classical school (fakes, outcome assertions)
-ruff check hal_relay tests && black --check hal_relay tests
+ruff check relaypi tests && black --check relaypi tests
 ```
 
 See [`docs/development.md`](docs/development.md) — especially the **four PI RPC

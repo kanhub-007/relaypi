@@ -13,8 +13,8 @@ import logging
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
-from hal_relay.core.domain.interfaces.agent_client import AgentClient
-from hal_relay.core.domain.interfaces.session_router import SessionRouter
+from relaypi.core.domain.interfaces.agent_client import AgentClient
+from relaypi.core.domain.interfaces.session_router import SessionRouter
 
 logger = logging.getLogger(__name__)
 

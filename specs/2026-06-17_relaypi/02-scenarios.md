@@ -1,4 +1,4 @@
-# HAL Relay — Scenarios
+# RelayPI — Scenarios
 
 Ordered by MoSCoW priority, then slice. Each scenario shows Gherkin, I/O, and a
 Classical-school black-box Verify block using in-memory fakes (no mocks of

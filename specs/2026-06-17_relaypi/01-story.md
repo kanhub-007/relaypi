@@ -1,4 +1,4 @@
-# HAL Relay — Telegram ↔ PI Bridge
+# RelayPI — Telegram ↔ PI Bridge
 
 ## User Story
 As HAL's owner, I want to interact with PI through Telegram with a chat-style
@@ -27,7 +27,7 @@ Three services, three responsibilities. Each earns its existence independently:
   Agent-agnostic and reusable across N consumers.
 - **PI (HAL)** — *Agent cognition.* Sessions, context, compaction, tool loop,
   reasoning, MCP tools. Channel-agnostic.
-- **hal-relay** — *The binding layer.* The only component that knows both
+- **relaypi** — *The binding layer.* The only component that knows both
   "these Telegram chats belong to HAL" and "this is how you drive HAL." Owns
   trust, routing, supervision, and presentation.
 
@@ -46,7 +46,7 @@ Three services, three responsibilities. Each earns its existence independently:
                  │                                            ┌──────────────┐
                  ▼ inbound (WS)                  outbound ►│              │
         ╔════════════════════════════════════════╗  RPC ▼    │   PI (HAL)   │
-        ║              hal-relay                  ║ stdin ──►│  (cognition) │
+        ║              relaypi                  ║ stdin ──►│  (cognition) │
         ║  (binding · trust · supervision)       ║ stdout ◄─│              │
         ║                                        ║          │  sessions    │
         ║  • allowlist (DMs + open/restricted)   ║          │  context     │
@@ -80,7 +80,7 @@ No new telegramy endpoint is required for the MVP.
   consumers); its cost is amortized, and a PI crash can't interrupt delivery
   to anyone else.
 - **PI** must stay channel-pure to remain reusable in terminals, IDEs, CI.
-- **hal-relay** is the anti-corruption layer between Telegram-land and
+- **relaypi** is the anti-corruption layer between Telegram-land and
   agent-land. Process isolation contains crashes; independent deploy/test lets
   trust policy, routing, and presentation evolve on their own cadence.
 

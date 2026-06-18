@@ -5,8 +5,8 @@ Black-box: wire the Relay with fakes that raise, assert the observable outcomes
 Relay must never crash and never leave the user in silence when PI fails.
 """
 
-from hal_relay.core.application.relay import Relay
-from hal_relay.core.domain.agent_error import AgentError
+from relaypi.core.application.relay import Relay
+from relaypi.core.domain.agent_error import AgentError
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_agent_client import FakeAgentClient

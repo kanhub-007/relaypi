@@ -1,5 +1,5 @@
 [project]
-name = "hal-relay"
+name = "relaypi"
 version = "0.1.0"
 description = "Binding layer between telegramy (Telegram transport) and PI (HAL agent)."
 requires-python = ">=3.12"

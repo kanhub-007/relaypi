@@ -4,9 +4,9 @@ Black-box: we wire the Relay with in-memory fakes and assert on observable
 outcomes (what was prompted, what was sent). No interaction assertions.
 """
 
-from hal_relay.core.application.relay import Relay
-from hal_relay.core.domain.entities.group_config import GroupConfig
-from hal_relay.infrastructure.allowlist_config import ConfigAllowlist
+from relaypi.core.application.relay import Relay
+from relaypi.core.domain.entities.group_config import GroupConfig
+from relaypi.infrastructure.allowlist_config import ConfigAllowlist
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.event_helpers import msg_event
 from tests.fakes.fake_agent_client import FakeAgentClient

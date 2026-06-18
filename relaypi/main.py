@@ -1,6 +1,6 @@
-"""HAL Relay entry point.
+"""RelayPI entry point.
 
-Run with:  python -m hal_relay.main
+Run with:  python -m relaypi.main
 
 Windows note: loop.add_signal_handler is unsupported, so shutdown is driven by
 KeyboardInterrupt (Ctrl+C / console close). On POSIX you could add SIGTERM/SIGINT
@@ -11,7 +11,7 @@ import asyncio
 import logging
 import sys
 
-from hal_relay.startup.factory import create_relay
+from relaypi.startup.factory import create_relay
 
 logger = logging.getLogger(__name__)
 

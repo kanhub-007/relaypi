@@ -14,12 +14,12 @@ import logging
 
 import httpx
 
-from hal_relay.core.domain.interfaces.message_sender import MessageSender
+from relaypi.core.domain.interfaces.message_sender import MessageSender
 
 logger = logging.getLogger(__name__)
 
 _MCP_PROTOCOL_VERSION = "2024-11-05"
-_CLIENT_INFO = {"name": "hal-relay", "version": "0.1.0"}
+_CLIENT_INFO = {"name": "relaypi", "version": "0.1.0"}
 _TOOLS_CALL_TIMEOUT = 300.0  # match telegramy's tools/call timeout
 
 

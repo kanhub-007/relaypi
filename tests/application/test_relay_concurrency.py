@@ -12,7 +12,7 @@ import asyncio
 
 import pytest
 
-from hal_relay.core.application.relay import Relay
+from relaypi.core.application.relay import Relay
 from tests.fakes.allow_all_list import AllowAllList
 from tests.fakes.blocking_agent_client import BlockingAgentClient
 from tests.fakes.event_helpers import msg_event

@@ -1,6 +1,6 @@
 # Architecture
 
-> Condensed from `specs/2026-06-17_hal-relay/`. See `01-story.md`,
+> Condensed from `specs/2026-06-17_relaypi/`. See `01-story.md`,
 > `03-domain.md`, and `05-architecture.md` there for the full reasoning.
 
 ## Three services, three responsibilities
@@ -9,7 +9,7 @@
 |---------|------|-------------|
 | **telegramy** | Bot API, polling/webhook, rate limits, markdown escaping, retry, selective WS fan-out, MCP send tools | Agent logic |
 | **PI (HAL)** | Sessions, transcripts, compaction, tool policies, MCP tools, the agent loop, reasoning | Channel I/O |
-| **hal-relay** | Allowlist (trust), chat→session routing, prompt formatting, PI process supervision, presentation (PI reply → Telegram message) | Sessions, context, business logic |
+| **relaypi** | Allowlist (trust), chat→session routing, prompt formatting, PI process supervision, presentation (PI reply → Telegram message) | Sessions, context, business logic |
 
 Each is valid as a separate service: telegramy is reusable across N consumers;
 PI stays channel-pure; the relay is the anti-corruption layer whose process

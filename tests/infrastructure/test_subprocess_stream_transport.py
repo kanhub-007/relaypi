@@ -9,8 +9,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-from hal_relay.infrastructure.adapters.pi_rpc_client import PIRpcClient
-from hal_relay.infrastructure.adapters.subprocess_stream_transport import (
+from relaypi.infrastructure.adapters.pi_rpc_client import PIRpcClient
+from relaypi.infrastructure.adapters.subprocess_stream_transport import (
     SubprocessStreamTransport,
 )
 
@@ -75,7 +75,7 @@ def test_subprocess_transport_satisfies_stream_transport_protocol():
     # L1: the Protocol is @runtime_checkable, so the structural-typing claim is
     # actually enforced. SubprocessStreamTransport and FakeStreamTransport both
     # must satisfy it.
-    from hal_relay.infrastructure.adapters.stream_transport import StreamTransport
+    from relaypi.infrastructure.adapters.stream_transport import StreamTransport
     from tests.fakes.fake_stream_transport import FakeStreamTransport
 
     assert isinstance(SubprocessStreamTransport(argv=_echo_argv()), StreamTransport)
